@@ -29,6 +29,7 @@ import android.databinding.tool.writer.JavaFileWriter;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 
+import java.util.HashSet;
 import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
@@ -74,8 +75,13 @@ import java.util.stream.Collectors;
         "android.databinding.Untaggable"
 })
 public class ProcessDataBinding extends AbstractProcessor {
+
+    private static final String AGGREGATING_ANNOTATION_PROCESSORS_INDICATOR =
+        "org.gradle.annotation.processing.aggregating";
+
     private List<ProcessingStep> mProcessingSteps;
     private CompilerArguments mCompilerArgs;
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         try {
@@ -182,6 +188,10 @@ public class ProcessDataBinding extends AbstractProcessor {
      * to be in annotation processor classpath by chance
      */
     private synchronized void readArguments() {
+        if (mCompilerArgs != null) {
+            return;
+        }
+
         try {
             mCompilerArgs = CompilerArguments.readFromOptions(processingEnv.getOptions());
             L.setDebugLog(mCompilerArgs.getEnableDebugLogs());
@@ -198,7 +208,22 @@ public class ProcessDataBinding extends AbstractProcessor {
 
     @Override
     public Set<String> getSupportedOptions() {
-        return CompilerArguments.ALL_PARAMS;
+        Set<String> supportedOptions = new HashSet<>(CompilerArguments.ALL_PARAMS);
+
+        // In addition to the regular supported options above, we also need to add an option to tell
+        // Gradle that this is an aggregating annotation processor (if the incremental flag is
+        // enabled).
+        // Note that when this method is called, we don't know whether data binding will actually be
+        // invoked later or not. Since the data binding options may not exist in the processing
+        // environment, we need to check whether the options exist first.
+        if (processingEnv.getOptions().containsKey(CompilerArguments.PARAM_INCREMENTAL)) {
+            readArguments();
+            if (mCompilerArgs.getIncremental()) {
+                supportedOptions.add(AGGREGATING_ANNOTATION_PROCESSORS_INDICATOR);
+            }
+        }
+
+        return supportedOptions;
     }
 
     /**

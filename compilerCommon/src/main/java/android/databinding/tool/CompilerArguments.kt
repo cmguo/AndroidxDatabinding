@@ -28,6 +28,9 @@ import java.util.TreeSet
  * from there.
  */
 data class CompilerArguments constructor(
+    // whether incremental annotation processing is requested
+    val incremental: Boolean,
+
     val artifactType: Type,
     val modulePackage: String,
     val minApi: Int,
@@ -71,6 +74,10 @@ data class CompilerArguments constructor(
 ) {
     init {
         Preconditions.check(
+            !(incremental && !isEnableV2),
+            "Incremental annotation processing is not supported by data binding V1"
+        )
+        Preconditions.check(
             artifactType != Type.FEATURE || featureInfoDir != null,
             "Must provide a feature info folder while compiling a non-base feature module"
         )
@@ -111,13 +118,18 @@ data class CompilerArguments constructor(
      */
     fun copyAsV1(modulePackage: String): CompilerArguments {
         val argMap = toMap().toMutableMap()
+
+        // Incremental annotation processing is not supported by data binding V1
+        argMap[PARAM_INCREMENTAL] = booleanToString(false)
         argMap[PARAM_MODULE_PACKAGE] = modulePackage
         argMap[PARAM_ENABLE_V2] = booleanToString(false)
+
         return readFromOptions(argMap)
     }
 
     fun toMap(): Map<String, String> {
         val args = HashMap<String, String>()
+        args[PARAM_INCREMENTAL] = booleanToString(incremental)
         args[PARAM_ARTIFACT_TYPE] = artifactType.name
         args[PARAM_MODULE_PACKAGE] = modulePackage
         args[PARAM_MIN_API] = minApi.toString()
@@ -152,6 +164,7 @@ data class CompilerArguments constructor(
          * it cannot happen in lock step.
          */
         private const val PREFIX = "android.databinding."
+        const val PARAM_INCREMENTAL = PREFIX + "incremental" // Needs to be public
         private const val PARAM_ARTIFACT_TYPE = PREFIX + "artifactType"
         private const val PARAM_MODULE_PACKAGE = PREFIX + "modulePackage"
         private const val PARAM_MIN_API = PREFIX + "minApi"
@@ -181,6 +194,7 @@ data class CompilerArguments constructor(
 
         @JvmField
         val ALL_PARAMS: Set<String> = Sets.newHashSet(
+            PARAM_INCREMENTAL,
             PARAM_ARTIFACT_TYPE,
             PARAM_MODULE_PACKAGE,
             PARAM_MIN_API,
@@ -203,6 +217,7 @@ data class CompilerArguments constructor(
         @JvmStatic
         fun readFromOptions(options: Map<String, String>): CompilerArguments {
             return CompilerArguments(
+                incremental = stringToBoolean(options[PARAM_INCREMENTAL]),
                 artifactType = Type.valueOf(options[PARAM_ARTIFACT_TYPE]!!),
                 modulePackage = options[PARAM_MODULE_PACKAGE]!!,
                 minApi = Integer.parseInt(options[PARAM_MIN_API]!!),
