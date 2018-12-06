@@ -123,8 +123,8 @@ public class CallbackExprModel extends ExprModel {
             Scope.enter(added);
             IdentifierExpr identifierWithSameName = mOriginal.findIdentifier(name);
             if (identifierWithSameName != null) {
-                L.w(ErrorMessages.CALLBACK_VARIABLE_NAME_CLASH, name, name,
-                        identifierWithSameName.getUserDefinedType());
+                L.w(ErrorMessages.CALLBACK_VARIABLE_NAME_CLASH, name,
+                        identifierWithSameName.getUserDefinedType(), name);
             }
         } finally {
             Scope.exit();

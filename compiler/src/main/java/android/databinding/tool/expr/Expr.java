@@ -221,7 +221,6 @@ abstract public class Expr implements VersionProvider, LocationScopeProvider {
             return;
         }
         mUnboxedAChild = true;
-        L.w(ErrorMessages.BOXED_VALUE_CASTING, child, this, child);
         int index = getChildren().indexOf(child);
         child.getParents().remove(this);
         getChildren().set(index, model.safeUnbox(child));
@@ -900,7 +899,12 @@ abstract public class Expr implements VersionProvider, LocationScopeProvider {
                 && shouldUnwrap(type, expr.getResolvedType())) {
             unwrapped = mModel.methodCall(expr, simpleGetterName, Collections.EMPTY_LIST);
             if (unwrapped == this) {
-                L.w(ErrorMessages.OBSERVABLE_FIELD_GET, this);
+                if (type.isObservableField()) {
+                    L.w(ErrorMessages.OBSERVABLE_FIELD_GET, this);
+                }
+                else if (type.isLiveData()) {
+                    L.w(ErrorMessages.LIVEDATA_FIELD_GETVALUE, this);
+                }
                 return; // This was already unwrapped!
             }
             unwrapped.setUnwrapObservableFields(false);

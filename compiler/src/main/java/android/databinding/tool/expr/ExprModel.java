@@ -249,7 +249,7 @@ public class ExprModel {
      */
     public Expr globalMethodCall(String methodName, List<Expr> args) {
         Preconditions.check(SAFE_UNBOX_METHOD_NAME.equals(methodName),
-                ErrorMessages.CANNOT_FIND_METHOD_ON_OWNER, methodName, "ViewDataBinding");
+                ErrorMessages.CANNOT_FIND_METHOD_ON_OWNER, "ViewDataBinding", methodName);
         Preconditions.check(args.size() == 1,
                 ErrorMessages.ARGUMENT_COUNT_MISMATCH, 1, args.size());
         MethodCallExpr expr = methodCall(viewDataBinding(), SAFE_UNBOX_METHOD_NAME, args);

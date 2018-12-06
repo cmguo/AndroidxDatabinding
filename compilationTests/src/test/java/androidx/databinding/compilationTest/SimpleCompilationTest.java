@@ -167,8 +167,8 @@ public class SimpleCompilationTest extends BaseCompilationTest {
                 message = String.format(ErrorMessages.UNDEFINED_VARIABLE, "myVariable");
                 expectedErrorFile = "/app/src/main/res/layout/broken.xml";
             } else if (errorFile.getCanonicalPath().equals(invalidSetter.getCanonicalPath())) {
-                message = String.format(ErrorMessages.CANNOT_FIND_SETTER_CALL, "android:textx",
-                        String.class.getCanonicalName(), "android.widget.TextView");
+                message = String.format(ErrorMessages.CANNOT_FIND_SETTER_CALL,
+                    "android.widget.TextView", "android:textx", String.class.getCanonicalName());
                 expectedErrorFile = "/app/src/main/res/layout/invalid_setter.xml";
             } else {
                 fail("unexpected exception " + exception.getBareMessage());
@@ -217,8 +217,8 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         prepareProject();
         ScopedException ex = singleFileErrorTest("/layout/invalid_setter_binding.xml",
                 "/app/src/main/res/layout/invalid_setter.xml", "myVariable",
-                String.format(ErrorMessages.CANNOT_FIND_SETTER_CALL, "android:textx",
-                        String.class.getCanonicalName(), "android.widget.TextView"));
+                String.format(ErrorMessages.CANNOT_FIND_SETTER_CALL, "android.widget.TextView",
+                    "android:textx", String.class.getCanonicalName()));
     }
 
     @Test
@@ -245,7 +245,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         singleFileWarningTest("/layout/layout_with_same_name_for_var_and_callback.xml",
                 "/app/src/main/res/layout/broken.xml",
                 String.format(ErrorMessages.CALLBACK_VARIABLE_NAME_CLASH,
-                        "myVar", "myVar", "String"));
+                        "myVar", "String", "myVar"));
 
     }
 
@@ -321,8 +321,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
                 new File(testFolder, "/app/src/main/res/layout/merge_include.xml")
                         .getCanonicalFile(),
                 errorFile.getCanonicalFile());
-        assertEquals("Merge shouldn't support includes as root. Error message was '" + result.error,
-                ErrorMessages.INCLUDE_INSIDE_MERGE, ex.getBareMessage());
+        assertEquals(ErrorMessages.INCLUDE_INSIDE_MERGE, ex.getBareMessage());
     }
 
     @Test
@@ -342,8 +341,9 @@ public class SimpleCompilationTest extends BaseCompilationTest {
                 "/app/src/main/res/layout/layout_with_two_way_event_attribute.xml")
                         .getCanonicalFile(),
                 errorFile.getCanonicalFile());
-        assertEquals("The attribute android:textAttrChanged is a two-way binding event attribute " +
-                "and cannot be assigned.", ex.getBareMessage());
+        assertEquals(
+            String.format(ErrorMessages.TWO_WAY_EVENT_ATTRIBUTE, "android:textAttrChanged"),
+            ex.getBareMessage());
     }
 
     @Test

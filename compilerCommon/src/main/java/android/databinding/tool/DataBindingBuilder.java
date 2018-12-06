@@ -92,7 +92,7 @@ public class DataBindingBuilder {
     }
 
     public boolean getPrintMachineReadableOutput() {
-        return ScopedException.issEncodeOutput();
+        return ScopedException.isEncodeOutput();
     }
 
     public void setDebugLogEnabled(boolean enableDebugLogs) {

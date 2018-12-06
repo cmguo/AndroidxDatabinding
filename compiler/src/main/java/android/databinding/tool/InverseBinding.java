@@ -110,9 +110,8 @@ public class InverseBinding implements LocationScopeProvider {
             mGetterCall = setterStore.getGetterCall(mName, viewType, resolvedType,
                     expr.getModel().getImports());
             if (mGetterCall == null) {
-                L.e(ErrorMessages.CANNOT_FIND_GETTER_CALL, mName,
-                        expr == null ? "Unknown" : mExpr.getResolvedType(),
-                        mTarget.getResolvedType());
+                L.e(ErrorMessages.CANNOT_FIND_GETTER_CALL, mTarget.getResolvedType(), mName,
+                        expr == null ? "Unknown" : mExpr.getResolvedType());
             }
         } finally {
             Scope.exit();

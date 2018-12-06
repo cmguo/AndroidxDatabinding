@@ -19,77 +19,84 @@ package android.databinding.tool.processing;
 public class ErrorMessages {
 
     public static final String INCLUDE_INSIDE_MERGE =
-            "Data binding does not support include elements as direct children of a merge element.";
+            "<include> elements are not supported as direct children of <merge> elements";
 
     public static final String UNDEFINED_VARIABLE =
-            "Identifiers must have user defined types from the XML file. %s is missing it";
+            "Could not find identifier '%s'\n" +
+            "\n" +
+            "Check that the identifier is spelled correctly, and that no <import> or <variable> tags are missing.";
 
     public static final String CANNOT_FIND_SETTER_CALL =
-            "Cannot find the setter for attribute '%s' with parameter type %s on %s.";
+            "Cannot find a setter for <%s %s> that accepts parameter type '%s'\n" +
+            "\n" +
+            "If a binding adapter provides the setter, check that the adapter is annotated correctly and that the parameter type matches.";
 
     public static final String CANNOT_RESOLVE_TYPE =
-            "Cannot resolve type for %s";
+            "Cannot resolve type '%s'";
 
     public static final String MULTI_CONFIG_LAYOUT_CLASS_NAME_MISMATCH =
-            "Classname (%s) does not match the class name defined for layout(%s) in other"
-                    + " configurations";
+            "<data class='%s'> is not defined consistently on alternative layout '%s'";
 
     public static final String MULTI_CONFIG_VARIABLE_TYPE_MISMATCH =
-            "Variable declaration (%s - %s) does not match the type defined for layout(%s) in other"
-                    + " configurations";
+            "<variable name='%s' type='%s'> is not defined consistently on alternative layout '%s'";
 
     public static final String MULTI_CONFIG_IMPORT_TYPE_MISMATCH =
-            "Import declaration (%s - %s) does not match the import defined for layout(%s) in other"
-                    + " configurations";
+            "<import alias='%s' type='%s'> is not defined consistently on alternative layout '%s'";
 
     public static final String MULTI_CONFIG_ID_USED_AS_IMPORT =
-            "Cannot use the same id (%s) for a View and an include tag.";
+            "<include id='%s'> conflicts with an ID used by a view in this layout";
 
-    public static final String ROOT_TAG_NOT_SUPPORTED = "android:tag is not supported on root " +
-            "elements of data bound layouts unless targeting API version 14 or greater. Value " +
-            "is '%s'";
+    public static final String ROOT_TAG_NOT_SUPPORTED =
+            "You must target API level 14 or greater to support 'android:tag' on root elements of data bound layouts";
 
-    public static final String SYNTAX_ERROR = "Syntax error: %s";
+    public static final String SYNTAX_ERROR =
+            "Syntax error: %s";
 
     public static final String CANNOT_FIND_GETTER_CALL =
-            "Cannot find the getter for attribute '%s' with value type %s on %s.";
+            "Cannot find a getter for <%s %s> that accepts parameter type '%s'\n" +
+            "\n" +
+            "If a binding adapter provides the getter, check that the adapter is annotated correctly and that the parameter type matches.";
 
     public static final String EXPRESSION_NOT_INVERTIBLE =
-            "The expression %s cannot be inverted: %s";
+            "The expression '%s' cannot be inverted, so it cannot be used in a two-way binding\n" +
+            "\n" +
+            "Details: %s";
 
     public static final String TWO_WAY_EVENT_ATTRIBUTE =
-            "The attribute %s is a two-way binding event attribute and cannot be assigned.";
+            "The attribute '%s' is generated and reserved for two-way data binding so an expression cannot be assigned to it";
 
     public static final String CANNOT_FIND_ABSTRACT_METHOD =
-            "Cannot find the proper callback class for %s. Tried %s but it has %d abstract methods,"
-                    + " should have %d abstract methods.";
+            "Cannot assign callback expression to '%s'\n" +
+            "\n" +
+            "Make sure you aren't using lambda syntax if the expression should only return a value directly";
 
-    public static final String CALLBACK_ARGUMENT_COUNT_MISMATCH = "The callback %s#%s has %s"
-            + " methods but the lambda defined has %d. It should have either 0 or equal number of"
-            + " parameters.";
-
-    public static final String UNDEFINED_CALLBACK_ARGUMENT =
-            "%s is not defined. It should either be a variable defined in the layout file or a"
-                    + " parameter of the Callback.";
+    public static final String CALLBACK_ARGUMENT_COUNT_MISMATCH =
+            "Number of lambda parameters is incorrect\n" +
+            "\n" +
+            "'%s::%s' accepts %d parameter(s), but the assigned expression uses %d parameter(s). The expression should have no " +
+            "parameters or an equal number of parameters.";
 
     public static final String DUPLICATE_CALLBACK_ARGUMENT =
-            "Callback arguments must have unique names. %s is used twice or more.";
+            "Callback parameter '%s' is not unique";
 
     public static final String CALLBACK_VARIABLE_NAME_CLASH =
-            "%s in the callback definition will override the variable %s (%s) in the callback"
-                    + " scope.";
+            "Callback parameter '%s' shadows variable '%s %s'";
 
-    public static String CANNOT_UNBOX_TYPE = "%s cannot be unboxed to a primitive type.";
+    public static final String CANNOT_UNBOX_TYPE =
+            "Cannot call 'safeUnbox' on '%s' as it is not a boxed, primitive type";
 
-    public static String BOXED_VALUE_CASTING = "%s is a boxed field but needs to be un-boxed to"
-            + " execute %s. This may cause NPE so Data Binding will safely unbox it. You can change"
-            + " the expression and explicitly wrap %s with safeUnbox() to prevent the warning";
+    public static final String CANNOT_FIND_METHOD_ON_OWNER =
+            "Cannot find method '%s::%s'";
 
-    public static String CANNOT_FIND_METHOD_ON_OWNER = "Cannot find method %s on %s";
+    public static final String ARGUMENT_COUNT_MISMATCH =
+            "Unexpected parameter count\n" +
+            "\n" +
+            "Expected: %d\n" +
+            "Found: %d";
 
-    public static String ARGUMENT_COUNT_MISMATCH = "Expected number of args:%d. Received: %d";
+    public static final String OBSERVABLE_FIELD_GET =
+            "The call to 'get' is unnecessary for Observable field '%s' and should be removed";
 
-    public static String OBSERVABLE_FIELD_GET = "Do not explicitly call 'get()' on "
-            + "ObservableFields or 'getValue()' on LiveData in an expression. This support will be "
-            + "removed soon. '%s'";
+    public static final String LIVEDATA_FIELD_GETVALUE =
+            "The call to 'getValue' is unnecessary for LiveData field '%s' and should be removed";
 }

@@ -101,15 +101,15 @@ public class Scope {
             return;
         }
         StringBuilder sb = new StringBuilder();
-        HashSet<String> messages = new HashSet<String>();
+        HashSet<String> seenMessages = new HashSet<String>();
         for (ScopedException ex : sDeferredExceptions) {
             final String message = ex.getMessage();
-            if (!messages.contains(message)) {
-                sb.append(message).append("\n");
-                messages.add(message);
+            if (!seenMessages.contains(message)) {
+                sb.append("ERROR: ").append(message).append("\n");
+                seenMessages.add(message);
             }
         }
-        throw new LoggedErrorException("Found data binding errors.\n" + sb.toString());
+        throw new LoggedErrorException("Found data binding error(s):\n\n" + sb.toString());
     }
 
     static String produceScopeLog() {

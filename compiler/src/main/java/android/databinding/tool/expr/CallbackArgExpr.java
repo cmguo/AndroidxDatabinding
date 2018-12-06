@@ -57,8 +57,7 @@ public class CallbackArgExpr extends IdentifierExpr {
 
     @Override
     protected ModelClass resolveType(ModelAnalyzer modelAnalyzer) {
-        Preconditions
-                .checkNotNull(mClassFromCallback, ErrorMessages.UNDEFINED_CALLBACK_ARGUMENT, mName);
+        Preconditions.checkNotNull(mClassFromCallback, ErrorMessages.UNDEFINED_VARIABLE, mName);
         return mClassFromCallback;
     }
 

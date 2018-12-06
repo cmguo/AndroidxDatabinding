@@ -17,31 +17,66 @@
 package android.databinding.tool.processing;
 
 
-import com.google.common.base.Joiner;
-import com.google.common.base.Splitter;
-import com.google.common.base.Strings;
-
 import android.databinding.tool.store.Location;
 import android.databinding.tool.util.L;
-import android.databinding.tool.util.StringUtils;
-
+import com.android.annotations.NonNullByDefault;
+import com.google.common.base.Splitter;
+import com.google.common.base.Strings;
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.annotations.SerializedName;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * An exception that contains scope information.
  */
 public class ScopedException extends RuntimeException {
-    public static final String ERROR_LOG_PREFIX = "****/ data binding error ****";
-    public static final String ERROR_LOG_SUFFIX = "****\\ data binding error ****";
-    public static final String MSG_KEY = "msg:";
-    public static final String LOCATION_KEY = "loc:";
-    public static final String FILE_KEY = "file:";
+    private static final Pattern NEWLINE_PATTERN = Pattern.compile("\\r?\\n");
+    private static final String ERROR_LOG_PREFIX = "[databinding] ";
     private static boolean sEncodeOutput = false;
     private ScopedErrorReport mScopedErrorReport;
     private String mScopeLog;
+
+    @NonNullByDefault
+    private static final class FileLocation {
+        @SerializedName("line0")
+        public final int lineStart;
+        @SerializedName("col0")
+        public final int colStart;
+        @SerializedName("line1")
+        public final int lineEnd;
+        @SerializedName("col1")
+        public final int colEnd;
+
+        private FileLocation(Location location) {
+            lineStart = location.startLine;
+            colStart = location.startOffset;
+            lineEnd = location.endLine;
+            colEnd = location.endOffset;
+        }
+
+        public Location toLocation() {
+            return new Location(lineStart, colStart, lineEnd, colEnd);
+        }
+    }
+
+    @NonNullByDefault
+    private static final class EncodedMessage {
+        @SerializedName("msg")
+        public final String message;
+        @SerializedName("file")
+        public final String filePath;
+        @SerializedName("pos")
+        public final List<FileLocation> positions = new ArrayList<>();
+
+        private EncodedMessage(String message, String filePath) {
+            this.message = message;
+            this.filePath = filePath;
+        }
+    }
 
     public ScopedException(String message, Object... args) {
         super(message == null ? "unknown data binding exception" :
@@ -67,11 +102,10 @@ public class ScopedException extends RuntimeException {
     public String createHumanReadableMessage() {
         ScopedErrorReport scopedError = getScopedErrorReport();
         StringBuilder sb = new StringBuilder();
-        sb.append(super.getMessage()).append("\n")
-                .append("file://").append(scopedError.getFilePath());
+        sb.append(super.getMessage()).append("\n\n")
+            .append("file://").append(scopedError.getFilePath());
         if (scopedError.getLocations() != null && scopedError.getLocations().size() > 0) {
-            sb.append(" Line:");
-            sb.append(scopedError.getLocations().get(0).startLine);
+            sb.append(" Line:").append(scopedError.getLocations().get(0).startLine);
         }
         sb.append("\n");
         return sb.toString();
@@ -79,17 +113,16 @@ public class ScopedException extends RuntimeException {
 
     private String createEncodedMessage() {
         ScopedErrorReport scopedError = getScopedErrorReport();
-        StringBuilder sb = new StringBuilder();
-        sb.append(ERROR_LOG_PREFIX)
-                .append(MSG_KEY).append(super.getMessage()).append("\n")
-                .append(FILE_KEY).append(scopedError.getFilePath()).append("\n");
+
+        EncodedMessage encoded = new EncodedMessage(super.getMessage(), scopedError.getFilePath());
         if (scopedError.getLocations() != null) {
             for (Location location : scopedError.getLocations()) {
-                sb.append(LOCATION_KEY).append(location.toUserReadableString()).append("\n");
+                encoded.positions.add(new FileLocation(location));
             }
         }
-        sb.append(ERROR_LOG_SUFFIX);
-        return Joiner.on(' ').join(Splitter.on(StringUtils.LINE_SEPARATOR).split(sb));
+
+        Gson gson = new Gson();
+        return ERROR_LOG_PREFIX + gson.toJson(encoded);
     }
 
     public ScopedErrorReport getScopedErrorReport() {
@@ -100,62 +133,41 @@ public class ScopedException extends RuntimeException {
         return mScopedErrorReport.isValid();
     }
 
-    public static ScopedException createFromOutput(String output) {
-        String message = "";
-        String file = "";
-        List<Location> locations = new ArrayList<Location>();
-        int msgStart = output.indexOf(MSG_KEY);
-        if (msgStart < 0) {
-            message = output;
-        } else {
-            int fileStart = output.indexOf(FILE_KEY, msgStart + MSG_KEY.length());
-            if (fileStart < 0) {
-                message = output;
-            } else {
-                message = output.substring(msgStart + MSG_KEY.length(), fileStart);
-                int locStart = output.indexOf(LOCATION_KEY, fileStart + FILE_KEY.length());
-                if (locStart < 0) {
-                    file = output.substring(fileStart + FILE_KEY.length());
-                } else {
-                    file = output.substring(fileStart + FILE_KEY.length(), locStart);
-                    int nextLoc = 0;
-                    while(nextLoc >= 0) {
-                        nextLoc = output.indexOf(LOCATION_KEY, locStart + LOCATION_KEY.length());
-                        Location loc;
-                        if (nextLoc < 0) {
-                            loc = Location.fromUserReadableString(
-                                    output.substring(locStart + LOCATION_KEY.length()));
-                        } else {
-                            loc = Location.fromUserReadableString(
-                                    output.substring(locStart + LOCATION_KEY.length(), nextLoc));
-                        }
-                        if (loc != null && loc.isValid()) {
-                            locations.add(loc);
-                        }
-                        locStart = nextLoc;
-                    }
-                }
-            }
-        }
-        return new ScopedException(message.trim(),
-                new ScopedErrorReport(Strings.isNullOrEmpty(file) ? null : file.trim(), locations));
+    private static ScopedException parseJson(String jsonError) throws JsonSyntaxException {
+        Gson gson = new Gson();
+        EncodedMessage encoded = gson.fromJson(jsonError, EncodedMessage.class);
+        List<Location> locations = encoded.positions
+          .stream()
+          .map(FileLocation::toLocation)
+          .collect(Collectors.toList());
+
+        return new ScopedException(
+          encoded.message,
+            new ScopedErrorReport(Strings.isNullOrEmpty(encoded.filePath) ? null : encoded.filePath,
+                locations));
     }
 
+    /**
+     * Given encoded output generated by {@link #getMessage()}, extract out the list of
+     * {@link ScopedException}s contained within.
+     */
     public static List<ScopedException> extractErrors(String output) {
-        List<ScopedException> errors = new ArrayList<ScopedException>();
-        int index = output.indexOf(ERROR_LOG_PREFIX);
-        final int limit = output.length();
-        while (index >= 0 && index < limit) {
-            int end = output.indexOf(ERROR_LOG_SUFFIX, index + ERROR_LOG_PREFIX.length());
-            if (end == -1) {
-                errors.add(createFromOutput(output.substring(index + ERROR_LOG_PREFIX.length())));
-                break;
-            } else {
-                errors.add(createFromOutput(output.substring(index + ERROR_LOG_PREFIX.length(),
-                        end)));
-                index = output.indexOf(ERROR_LOG_PREFIX, end + ERROR_LOG_SUFFIX.length());
+        Iterable<String> lines = Splitter.on(NEWLINE_PATTERN).omitEmptyStrings().trimResults()
+            .split(output);
+        List<ScopedException> errors = new ArrayList<>();
+        for (String line : lines) {
+            if (!line.contains(ERROR_LOG_PREFIX)) {
+                continue;
+            }
+
+            line = line.substring(line.indexOf(ERROR_LOG_PREFIX) + ERROR_LOG_PREFIX.length());
+            try {
+                errors.add(parseJson(line));
+            }
+            catch (JsonSyntaxException ignored) {
             }
         }
+
         return errors;
     }
 
@@ -163,7 +175,7 @@ public class ScopedException extends RuntimeException {
         sEncodeOutput = encodeOutput;
     }
 
-    public static boolean issEncodeOutput() {
+    public static boolean isEncodeOutput() {
         return sEncodeOutput;
     }
 }
