@@ -42,28 +42,37 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-@SupportedAnnotationTypes({
-        "androidx.databinding.BindingAdapter",
-        "androidx.databinding.InverseBindingMethods",
-        "androidx.databinding.InverseBindingAdapter",
-        "androidx.databinding.InverseMethod",
-        "androidx.databinding.Untaggable",
-        "androidx.databinding.BindingMethods",
-        "androidx.databinding.BindingConversion",
-        "androidx.databinding.BindingBuildInfo",
-        "android.databinding.BindingAdapter",
-        "android.databinding.InverseBindingMethods",
-        "android.databinding.InverseBindingAdapter",
-        "android.databinding.InverseMethod",
-        "android.databinding.Untaggable",
-        "android.databinding.BindingMethods",
-        "android.databinding.BindingConversion",
-        "android.databinding.BindingBuildInfo"}
-)
 /**
  * Parent annotation processor that dispatches sub steps to ensure execution order.
  * Use initProcessingSteps to add a new step.
+ *
+ * NOTE: For incremental annotation processing to work correctly, the following list of supported
+ * annotation types needs to be exhaustive.
  */
+@SupportedAnnotationTypes({
+        "androidx.databinding.Bindable",
+        "androidx.databinding.BindingAdapter",
+        "androidx.databinding.BindingBuildInfo",
+        "androidx.databinding.BindingConversion",
+        "androidx.databinding.BindingMethod",
+        "androidx.databinding.BindingMethods",
+        "androidx.databinding.InverseBindingAdapter",
+        "androidx.databinding.InverseBindingMethod",
+        "androidx.databinding.InverseBindingMethods",
+        "androidx.databinding.InverseMethod",
+        "androidx.databinding.Untaggable",
+        "android.databinding.Bindable",
+        "android.databinding.BindingAdapter",
+        "android.databinding.BindingBuildInfo",
+        "android.databinding.BindingConversion",
+        "android.databinding.BindingMethod",
+        "android.databinding.BindingMethods",
+        "android.databinding.InverseBindingAdapter",
+        "android.databinding.InverseBindingMethod",
+        "android.databinding.InverseBindingMethods",
+        "android.databinding.InverseMethod",
+        "android.databinding.Untaggable"
+})
 public class ProcessDataBinding extends AbstractProcessor {
     private List<ProcessingStep> mProcessingSteps;
     private CompilerArguments mCompilerArgs;
