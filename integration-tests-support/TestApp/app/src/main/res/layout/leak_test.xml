@@ -15,6 +15,12 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
     <data>
         <variable name="name" type="String"/>
+        <variable
+            name="liveData"
+            type="android.arch.lifecycle.LiveData&lt;String>"/>
+        <variable
+            name="observableField"
+            type="android.databinding.ObservableField&lt;String>"/>
     </data>
     <LinearLayout
             android:orientation="vertical"
@@ -24,5 +30,13 @@
                 android:id="@+id/textView"
                 android:layout_width="wrap_content" android:layout_height="wrap_content"
                 android:text="@{name}"/>
+        <TextView
+            android:id="@+id/textView2"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@{liveData}"/>
+        <TextView
+            android:id="@+id/textView3"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:text="@{observableField}"/>
     </LinearLayout>
 </layout>

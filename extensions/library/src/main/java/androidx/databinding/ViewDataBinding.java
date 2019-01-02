@@ -1589,7 +1589,9 @@ public abstract class ViewDataBinding extends BaseObservable {
         @Override
         public void onChanged(@Nullable Object o) {
             ViewDataBinding binder = mListener.getBinder();
-            binder.handleFieldChange(mListener.mLocalFieldId, mListener.getTarget(), 0);
+            if (binder != null) {
+                binder.handleFieldChange(mListener.mLocalFieldId, mListener.getTarget(), 0);
+            }
         }
     }
 
