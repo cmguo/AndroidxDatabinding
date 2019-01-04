@@ -19,7 +19,7 @@ package android.databinding.tool
 import android.databinding.tool.util.Preconditions
 import com.google.common.collect.Sets
 import java.io.File
-import java.util.HashMap
+import java.util.TreeSet
 
 @Suppress("unused")
 /**
@@ -63,7 +63,11 @@ data class CompilerArguments constructor(
     val printEncodedErrorLogs: Boolean,
     val isTestVariant: Boolean,
     val isEnabledForTests: Boolean,
-    val isEnableV2: Boolean
+    val isEnableV2: Boolean,
+    // comma separated list of package names for direct dependencies that are directly accessible in this compilation.
+    // only passed by bazel to be able to distinguish which mappers in the classpath can be accessed
+    // in generated code. Gradle removes such classes from classpath hence they are not necessary.
+    val directDependencyPackages : String? = null
 ) {
     init {
         Preconditions.check(
@@ -88,6 +92,18 @@ data class CompilerArguments constructor(
 
     val isFeature: Boolean
         get() = artifactType == Type.FEATURE
+
+    // returns null if not specified
+    fun parseDirectDependencyPackages() : TreeSet<String>? {
+        return directDependencyPackages?.let {
+            val encoded = if (it.startsWith('[') && it.endsWith(']')) {
+                it.subSequence(1, it.length - 1)
+            } else {
+                it
+            }
+            encoded.splitToSequence(',').toCollection(TreeSet())
+        }
+    }
 
     /**
      * Creates a copy of the arguments but sets the version to v1 and package to the given package.
@@ -118,6 +134,9 @@ data class CompilerArguments constructor(
         args[PARAM_IS_TEST_VARIANT] = booleanToString(isTestVariant)
         args[PARAM_ENABLE_FOR_TESTS] = booleanToString(isEnabledForTests)
         args[PARAM_ENABLE_V2] = booleanToString(isEnableV2)
+        if (directDependencyPackages != null) {
+            args[PARAM_DIRECT_DEPENDENCY_PKGS] = directDependencyPackages
+        }
         return args
     }
 
@@ -153,6 +172,12 @@ data class CompilerArguments constructor(
         private const val PARAM_IS_TEST_VARIANT = PREFIX + "isTestVariant"
         private const val PARAM_ENABLE_FOR_TESTS = PREFIX + "enableForTests"
         private const val PARAM_ENABLE_V2 = PREFIX + "enableV2"
+        // this is only passed by blaze to distinguish which mappers are accessible in code.
+        // It is not needed in gradle since gradle removes them from classpath unless they are
+        // accessible
+        // it looks like [pkg1, pkg2]. Java does not distinguish between empty string vs null (absent) so we are
+        // using [] as a wrapper around to easily distinguish between unspecified vs empty list
+        private const val PARAM_DIRECT_DEPENDENCY_PKGS = PREFIX + "directDependencyPkgs"
 
         @JvmField
         val ALL_PARAMS: Set<String> = Sets.newHashSet(
@@ -171,7 +196,8 @@ data class CompilerArguments constructor(
             PARAM_PRINT_ENCODED_ERROR_LOGS,
             PARAM_IS_TEST_VARIANT,
             PARAM_ENABLE_FOR_TESTS,
-            PARAM_ENABLE_V2
+            PARAM_ENABLE_V2,
+            PARAM_DIRECT_DEPENDENCY_PKGS
         )
 
         @JvmStatic
@@ -203,7 +229,9 @@ data class CompilerArguments constructor(
                 stringToBoolean(options[PARAM_PRINT_ENCODED_ERROR_LOGS]),
                 isTestVariant = stringToBoolean(options[PARAM_IS_TEST_VARIANT]),
                 isEnabledForTests = stringToBoolean(options[PARAM_ENABLE_FOR_TESTS]),
-                isEnableV2 = stringToBoolean(options[PARAM_ENABLE_V2])
+                isEnableV2 = stringToBoolean(options[PARAM_ENABLE_V2]),
+                // if specified, rely on it even if it is empty
+                directDependencyPackages = options[PARAM_DIRECT_DEPENDENCY_PKGS]
             )
         }
 

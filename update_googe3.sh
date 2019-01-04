@@ -67,6 +67,7 @@ copy_x_aar() {
 
 remove_restrict_to() {
   sed -i '/RestrictTo/d' $1
+  sed -i 's/android\.support\.v7\.widget\.CardView/androidx.cardview.widget.CardView/g' $1
 }
 
 # copy jars

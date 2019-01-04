@@ -185,6 +185,7 @@ public class ProcessDataBinding extends AbstractProcessor {
         try {
             mCompilerArgs = CompilerArguments.readFromOptions(processingEnv.getOptions());
             L.setDebugLog(mCompilerArgs.getEnableDebugLogs());
+            L.d("processor args: %s", mCompilerArgs);
             ScopedException.encodeOutput(mCompilerArgs.getPrintEncodedErrorLogs());
         } catch (Throwable t) {
             String allParam = processingEnv.getOptions().entrySet().stream().map(

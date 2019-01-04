@@ -23,14 +23,19 @@ import android.databinding.tool.store.FeatureInfoList;
 import android.databinding.tool.store.GenClassInfoLog;
 import android.databinding.tool.store.ResourceBundle;
 import android.databinding.tool.util.L;
+import android.databinding.tool.util.StringUtils;
 import android.databinding.tool.writer.BindingMapperWriter;
 import android.databinding.tool.writer.BindingMapperWriterV2;
 import android.databinding.tool.writer.JavaFileWriter;
 import android.databinding.tool.writer.MergedBindingMapperWriter;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
+import com.google.common.base.Splitter;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.TypeElement;
@@ -42,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
@@ -189,18 +195,8 @@ public class CompilerChef {
             List<String> modulePackages) {
         if (compilerArgs.isEnableV2()) {
             // figure out which mappers exists as they may not exist for v1 libs.
-            Set<String> availableDependencyModules = modulePackages.stream()
-                    .filter(modulePackage -> {
-                        if (modulePackage.equals(compilerArgs.getModulePackage())) {
-                            // I'm not a dependency
-                            return false;
-                        }
-                        String mapper = BindingMapperWriterV2.createMapperQName(modulePackage);
-                        TypeElement impl = processingEnv
-                                .getElementUtils()
-                                .getTypeElement(mapper);
-                        return impl != null;
-                    }).distinct().collect(Collectors.toCollection(TreeSet::new));
+            SortedSet<String> availableDependencyModules = getDirectDependencies(
+                    processingEnv, compilerArgs, modulePackages);
             final boolean generateMapper;
             if (compilerArgs.isApp()) {
                 // generate mapper for apps only if it is not test or enabled for tests.
@@ -242,6 +238,30 @@ public class CompilerChef {
                     pkg + "." + dbr.getClassName(),
                     dbr.write(brValueLookup));
         }
+    }
+
+    @NotNull
+    private SortedSet<String> getDirectDependencies(
+            ProcessingEnvironment processingEnv,
+            CompilerArguments compilerArgs,
+            List<String> modulePackages) {
+        TreeSet<String> explicitPkgs = compilerArgs.parseDirectDependencyPackages();
+        if (explicitPkgs != null) {
+            // used the value specified by the compiler
+            return Sets.newTreeSet(explicitPkgs);
+        }
+        return modulePackages.stream()
+                .filter(modulePackage -> {
+                    if (modulePackage.equals(compilerArgs.getModulePackage())) {
+                        // I'm not a dependency
+                        return false;
+                    }
+                    String mapper = BindingMapperWriterV2.createMapperQName(modulePackage);
+                    TypeElement impl = processingEnv
+                            .getElementUtils()
+                            .getTypeElement(mapper);
+                    return impl != null;
+                }).distinct().collect(Collectors.toCollection(TreeSet::new));
     }
 
     public boolean useAndroidX() {

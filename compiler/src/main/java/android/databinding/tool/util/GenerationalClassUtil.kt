@@ -78,11 +78,12 @@ class GenerationalClassUtil constructor(
     }
 
     fun write(pkg:String, ext : ExtensionFilter, item: Any) {
+        L.d("writing output file for %s, %s into %s", pkg, ext, outputDir)
         try {
             Preconditions.checkNotNull(outputDir,
                     "incremental out directory should be" + " set to aar output directory.")
             outputDir!!.mkdirs()
-            val outFile = File(outputDir, "$pkg-${ext.ext}")
+            val outFile = File(outputDir, "$pkg${ext.ext}")
             if (ext.isJson) {
                 outFile.bufferedWriter(Charsets.UTF_8).use {
                     GSON.toJson(item, it)
@@ -94,6 +95,7 @@ class GenerationalClassUtil constructor(
                     }
                 }
             }
+            L.d("done writing output file %s into %s", pkg, outFile.canonicalPath)
         } catch (t : Throwable) {
             L.e(t, "cannot write file $pkg $ext")
         }
