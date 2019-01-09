@@ -226,7 +226,7 @@ public class MultiLayoutVerificationTest extends BaseCompilationTest {
         for (ScopedException exception : exceptions) {
             ScopedErrorReport report = exception.getScopedErrorReport();
             assertNotNull(report);
-            if (exception.getMessage().startsWith("Cannot find a setter")) {
+            if (exception.getBareMessage().startsWith("Cannot find a setter")) {
                 continue;
             }
             File file = new File(report.getFilePath());

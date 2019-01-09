@@ -105,7 +105,7 @@ public class Scope {
         for (ScopedException ex : sDeferredExceptions) {
             final String message = ex.getMessage();
             if (!seenMessages.contains(message)) {
-                sb.append("ERROR: ").append(message).append("\n");
+                sb.append(message).append("\n");
                 seenMessages.add(message);
             }
         }
