@@ -292,6 +292,7 @@ public class BaseCompilationTest {
         if (StringUtils.isNotBlank(javaHome)) {
             builder.environment().put("JAVA_HOME", javaHome);
         }
+        builder.environment().put("ANDROID_SDK_HOME", new File(testFolder, "/android_sdk_home").getAbsolutePath());
         builder.directory(testFolder);
         Process process = builder.start();
         String output = collect(process.getInputStream());
