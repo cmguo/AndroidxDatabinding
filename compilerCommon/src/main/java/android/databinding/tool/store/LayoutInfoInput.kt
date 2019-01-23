@@ -18,7 +18,7 @@ package android.databinding.tool.store
 
 import android.databinding.tool.DataBindingBuilder
 import android.databinding.tool.util.L
-import com.android.annotations.VisibleForTesting
+import com.google.common.annotations.VisibleForTesting
 import org.apache.commons.io.FileUtils
 import java.io.File
 import java.io.Serializable
