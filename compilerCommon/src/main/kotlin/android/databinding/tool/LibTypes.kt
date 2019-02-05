@@ -26,13 +26,6 @@ class LibTypes(val useAndroidX: Boolean) {
     } else {
         "android.databinding"
     }
-    private val typeRewriter by lazy(LazyThreadSafetyMode.NONE) {
-        val config = ConfigParser.loadDefaultConfig()
-                ?: throw IllegalStateException("Cannot load AndroidX conversion file.")
-        TypeRewriter(
-                config = config,
-                useFallback = true)
-    }
 
     val viewStubProxy by lazy(LazyThreadSafetyMode.NONE) {
         convert("android.databinding.ViewStubProxy")
@@ -198,5 +191,11 @@ class LibTypes(val useAndroidX: Boolean) {
                 "android.arch.persistence.room." to "androidx.room.",
                 "android.arch.persistence." to "androidx.sqlite."
         )
+
+        private val typeRewriter by lazy(LazyThreadSafetyMode.NONE) {
+            val config = ConfigParser.loadDefaultConfig()
+                ?: throw IllegalStateException("Cannot load AndroidX conversion file.")
+            TypeRewriter(config = config, useFallback = true)
+        }
     }
 }
