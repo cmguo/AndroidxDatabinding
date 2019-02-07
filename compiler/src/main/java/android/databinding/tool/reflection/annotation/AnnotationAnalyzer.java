@@ -73,6 +73,7 @@ public class AnnotationAnalyzer extends ModelAnalyzer {
 
     @Override
     public ModelClass findClassInternal(String className, ImportBag imports) {
+        Types typeUtils = getTypeUtils();
         className = className.trim();
         int numDimensions = 0;
         while (className.endsWith("[]")) {
@@ -84,7 +85,7 @@ public class AnnotationAnalyzer extends ModelAnalyzer {
             return addDimension(primitive.typeMirror, numDimensions);
         }
         if ("void".equals(className.toLowerCase())) {
-            return addDimension(getTypeUtils().getNoType(TypeKind.VOID), numDimensions);
+            return addDimension(typeUtils.getNoType(TypeKind.VOID), numDimensions);
         }
         int templateOpenIndex = className.indexOf('<');
         DeclaredType declaredType;
@@ -93,7 +94,7 @@ public class AnnotationAnalyzer extends ModelAnalyzer {
             if (typeElement == null) {
                 return null;
             }
-            declaredType = (DeclaredType) typeElement.asType();
+            declaredType = typeUtils.getDeclaredType(typeElement);
         } else {
             int templateCloseIndex = className.lastIndexOf('>');
             String paramStr = className.substring(templateOpenIndex + 1, templateCloseIndex);
@@ -117,7 +118,6 @@ public class AnnotationAnalyzer extends ModelAnalyzer {
                 }
                 typeArgs[i] = clazz.typeMirror;
             }
-            Types typeUtils = getTypeUtils();
             declaredType = typeUtils.getDeclaredType(typeElement, typeArgs);
         }
         return addDimension(declaredType, numDimensions);

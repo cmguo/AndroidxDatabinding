@@ -21,7 +21,15 @@
         <variable
             name="model"
             type="androidx.databinding.kotlintestapp.GenericModel" />
-    </data>
+
+        <!-- Test using generic classes with / without specifying types -->
+        <variable
+            name="listWithoutType"
+            type="java.util.List" />
+        <variable
+            name="listWithType"
+            type="java.util.List&lt;Integer>" />
+     </data>
 
     <LinearLayout
         android:orientation="vertical"
@@ -41,5 +49,19 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             app:genericList2="@{model.liveData}" />
-    </LinearLayout>
+
+        <TextView
+            android:id="@+id/textListWithoutType"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:text="@{listWithoutType.empty ? `empty` : `full`}" />
+
+        <TextView
+            android:id="@+id/textListWithType"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:text="@{listWithType.empty ? `empty` : `full`}" />
+     </LinearLayout>
 </layout>
