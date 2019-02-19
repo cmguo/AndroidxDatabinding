@@ -107,8 +107,6 @@ class GenerateBaseClassesTest {
         val infoOut = File(out, "infoOut")
         val options = ProcessXmlOptions().apply {
             appId = pkg
-            minSdk = 14
-            isLibrary = false
             resInput = File("src/test-data/$inputCase")
             resOutput = resOut
             layoutInfoOutput = infoOut

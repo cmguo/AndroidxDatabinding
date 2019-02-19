@@ -48,8 +48,6 @@ class ProcessXmlTest {
         val infoOut = File(out, "infoOut")
         val options = ProcessXmlOptions().apply {
             appId = "foo.baz"
-            minSdk = 14
-            isLibrary = false
             resInput = File("src/test-data/base")
             resOutput = resOut
             layoutInfoOutput = infoOut

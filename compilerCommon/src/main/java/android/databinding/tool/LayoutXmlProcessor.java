@@ -13,6 +13,8 @@
 
 package android.databinding.tool;
 
+import android.databinding.tool.util.RelativizableFile;
+import com.android.annotations.NonNull;
 import org.apache.commons.io.FileUtils;
 import org.xml.sax.SAXException;
 
@@ -149,7 +151,7 @@ public class LayoutXmlProcessor {
         mResourceBundle.addRemovedFile(input);
     }
 
-    public boolean processSingleFile(File input, File  output)
+    public boolean processSingleFile(@NonNull RelativizableFile input, @NonNull File output)
             throws ParserConfigurationException, SAXException, XPathExpressionException,
             IOException {
         final ResourceBundle.LayoutFileBundle bindingLayout = mLayoutFileParser
@@ -180,8 +182,9 @@ public class LayoutXmlProcessor {
                     throws ParserConfigurationException, SAXException, XPathExpressionException,
                     IOException {
                 final File output = convertToOutFile(file);
-                final ResourceBundle.LayoutFileBundle bindingLayout = layoutFileParser
-                        .parseXml(file, output, mResourceBundle.getAppPackage(), mOriginalFileLookup);
+                final ResourceBundle.LayoutFileBundle bindingLayout =
+                    layoutFileParser.parseXml(RelativizableFile.fromAbsoluteFile(file, null),
+                        output, mResourceBundle.getAppPackage(), mOriginalFileLookup);
                 if (bindingLayout != null && !bindingLayout.isEmpty()) {
                     mResourceBundle.addLayoutBundle(bindingLayout, true);
                 }

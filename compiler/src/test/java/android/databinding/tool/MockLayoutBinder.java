@@ -17,14 +17,17 @@ import android.databinding.tool.expr.IdentifierExpr;
 import android.databinding.tool.store.Location;
 import android.databinding.tool.store.ResourceBundle;
 
+import android.databinding.tool.util.RelativizableFile;
 import java.io.File;
 
 public class MockLayoutBinder extends LayoutBinder {
 
     public MockLayoutBinder() {
-        super(new ResourceBundle.LayoutFileBundle(new File("./blah.xml"), "blah.xml", "layout",
-                "com.test.submodule",
-                false), false);
+        super(
+            new ResourceBundle.LayoutFileBundle(
+                RelativizableFile.fromAbsoluteFile(new File("./blah.xml").getAbsoluteFile(), null),
+                "blah.xml", "layout", "com.test.submodule", false),
+            false);
     }
 
     public IdentifierExpr addVariable(String name, String type, Location location) {

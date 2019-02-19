@@ -299,6 +299,6 @@ public class LayoutBinder implements FileScopeProvider {
 
     @Override
     public String provideScopeFilePath() {
-        return mBundle.getAbsoluteFilePath();
+        return mBundle.getFilePath();
     }
 }

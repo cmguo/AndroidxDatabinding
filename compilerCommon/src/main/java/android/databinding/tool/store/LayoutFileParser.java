@@ -23,15 +23,16 @@ import android.databinding.tool.processing.scopes.FileScopeProvider;
 import android.databinding.tool.util.L;
 import android.databinding.tool.util.ParserHelper;
 import android.databinding.tool.util.Preconditions;
+import android.databinding.tool.util.RelativizableFile;
 import android.databinding.tool.util.StringUtils;
 import android.databinding.tool.util.XmlEditor;
 
+import com.android.annotations.NonNull;
 import com.google.common.base.Strings;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.apache.commons.io.FileUtils;
 import org.mozilla.universalchardet.UniversalDetector;
 import org.w3c.dom.Document;
@@ -68,10 +69,12 @@ public class LayoutFileParser {
 
     private static final String LAYOUT_PREFIX = "@layout/";
 
-    public ResourceBundle.LayoutFileBundle parseXml(final File inputFile, final File outputFile,
-            String pkg, final LayoutXmlProcessor.OriginalFileLookup originalFileLookup)
+    public ResourceBundle.LayoutFileBundle parseXml(@NonNull final RelativizableFile input,
+            @NonNull final File outputFile, @NonNull final String pkg,
+            @NonNull final LayoutXmlProcessor.OriginalFileLookup originalFileLookup)
             throws ParserConfigurationException, IOException, SAXException,
             XPathExpressionException {
+        File inputFile = input.getAbsoluteFile();
         File originalFile = originalFileLookup.getOriginalFileFor(inputFile);
         if (originalFile == null) {
             // if we can't find the original file, assume the input is the original file.
@@ -87,7 +90,9 @@ public class LayoutFileParser {
             });
             final String encoding = findEncoding(inputFile);
             stripFile(inputFile, outputFile, encoding, originalFileLookup);
-            return parseOriginalXml(originalFile, pkg, encoding);
+            return parseOriginalXml(
+                RelativizableFile.fromAbsoluteFile(originalFile, input.getBaseDir()),
+                pkg, encoding);
         } finally {
             Scope.exit();
         }
@@ -107,8 +112,11 @@ public class LayoutFileParser {
         return false;
     }
 
-    private ResourceBundle.LayoutFileBundle parseOriginalXml(final File original, String pkg,
-            String encoding) throws IOException {
+    private ResourceBundle.LayoutFileBundle parseOriginalXml(
+            @NonNull final RelativizableFile originalFile, @NonNull final String pkg,
+            @NonNull final String encoding)
+            throws IOException {
+        File original = originalFile.getAbsoluteFile();
         try {
             Scope.enter(new FileScopeProvider() {
                 @Override
@@ -137,8 +145,10 @@ public class LayoutFileParser {
             }
             boolean isMerge = "merge".equals(rootView.elmName.getText());
 
-            ResourceBundle.LayoutFileBundle bundle = new ResourceBundle.LayoutFileBundle(original,
-                    xmlNoExtension, original.getParentFile().getName(), pkg, isMerge);
+            ResourceBundle.LayoutFileBundle bundle =
+                new ResourceBundle.LayoutFileBundle(
+                    originalFile, xmlNoExtension, original.getParentFile().getName(), pkg,
+                    isMerge);
             final String newTag = original.getParentFile().getName() + '/' + xmlNoExtension;
             parseData(original, data, bundle);
             parseExpressions(newTag, rootView, isMerge, bundle);
@@ -166,7 +176,7 @@ public class LayoutFileParser {
                 = new ArrayList<XMLParser.ElementContext>();
         rootView.accept(new XMLParserBaseVisitor<Void>() {
             @Override
-            public Void visitElement(@NotNull XMLParser.ElementContext ctx) {
+            public Void visitElement(@NonNull XMLParser.ElementContext ctx) {
                 if (filter(ctx)) {
                     bindingElements.add(ctx);
                 } else {

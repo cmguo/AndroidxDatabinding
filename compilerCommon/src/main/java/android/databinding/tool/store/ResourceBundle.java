@@ -23,6 +23,8 @@ import android.databinding.tool.util.L;
 import android.databinding.tool.util.ParserHelper;
 import android.databinding.tool.util.Preconditions;
 
+import android.databinding.tool.util.RelativizableFile;
+import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOCase;
@@ -482,8 +484,13 @@ public class ResourceBundle implements Serializable {
         public String mFileName;
         @XmlAttribute(name = "modulePackage", required = true)
         public String mModulePackage;
-        @XmlAttribute(name = "absoluteFilePath", required = true)
-        public String mAbsoluteFilePath;
+
+        /**
+         * The path to the original layout file. It could be an absolute path or a relative path.
+         */
+        @XmlAttribute(name = "filePath", required = true)
+        public String mFilePath;
+
         private String mConfigName;
 
         // The binding class as given by the user
@@ -541,13 +548,19 @@ public class ResourceBundle implements Serializable {
             mIsMerge = other.mIsMerge;
         }
 
-        public LayoutFileBundle(File file, String fileName, String directory,
-                String modulePackage, boolean isMerge) {
+        public LayoutFileBundle(@NonNull RelativizableFile file, @NonNull String fileName,
+                @NonNull String directory, @NonNull String modulePackage, boolean isMerge) {
+            // We prefer relative path over absolute path as we don't want to break caching across
+            // machines---see bug 121288180.
+            if (file.getRelativeFile() != null) {
+                mFilePath = file.getRelativeFile().getPath();
+            } else {
+                mFilePath = file.getAbsoluteFile().getPath();
+            }
             mFileName = fileName;
             mDirectory = directory;
             mModulePackage = modulePackage;
             mIsMerge = isMerge;
-            mAbsoluteFilePath = file.getAbsolutePath();
         }
 
         public LocationScopeProvider getClassNameLocationProvider() {
@@ -713,13 +726,18 @@ public class ResourceBundle implements Serializable {
             return mModulePackage;
         }
 
-        public String getAbsoluteFilePath() {
-            return mAbsoluteFilePath;
+        /**
+         * Returns the path to the original layout file. It could be an absolute path or a relative
+         * path.
+         */
+        @NonNull
+        public String getFilePath() {
+          return mFilePath;
         }
 
         @Override
         public String provideScopeFilePath() {
-            return mAbsoluteFilePath;
+            return getFilePath();
         }
 
         private static final Marshaller sMarshaller;
