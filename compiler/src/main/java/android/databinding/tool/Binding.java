@@ -316,8 +316,7 @@ public class Binding implements LocationScopeProvider {
             mWrappedCall = SetterStore.get().getSetterCall(name,
                     viewType, resolvedType, imports);
             if (mWrappedCall == null) {
-                L.e("Cannot find the setter for attribute '%s' on %s with parameter type %s.",
-                        name, viewType, resolvedType);
+                L.e(ErrorMessages.CANNOT_FIND_SETTER_CALL, viewType, name, resolvedType);
             }
         }
 
