@@ -63,26 +63,22 @@ class BindingMapperWriter(
             nl("")
             nl("@Override")
             block("public ${libTypes.viewDataBinding} getDataBinder(${libTypes.dataBindingComponent} bindingComponent, android.view.View view, int layoutId)") {
-                block("switch(layoutId)") {
-                    layoutBinders.groupBy{it.layoutname }.forEach {
-                        val firstVal = it.value[0]
-                        tab("case ${firstVal.modulePackage}.R.layout.${firstVal.layoutname}:") {
-                            // we should check the tag to decide which layout we need to inflate
-                            block("") {
-                                tab("final Object tag = view.getTag();")
-                                tab("if(tag == null) throw new java.lang.RuntimeException(\"view must have a tag\");")
-                                it.value.forEach {
-                                    block("if (\"${it.tag}_0\".equals(tag))") {
-                                        if (it.isMerge) {
-                                            tab("return new ${it.`package`}.${it.implementationName}(bindingComponent, new android.view.View[]{view});")
-                                        } else {
-                                            tab("return new ${it.`package`}.${it.implementationName}(bindingComponent, view);")
-                                        }
-                                    }
+                layoutBinders.groupBy{it.layoutname }.forEach {
+                    val firstVal = it.value[0]
+                    block("if (layoutId == ${firstVal.modulePackage}.R.layout.${firstVal.layoutname})") {
+                        // we should check the tag to decide which layout we need to inflate
+                        nl("final Object tag = view.getTag();")
+                        nl("if(tag == null) throw new java.lang.RuntimeException(\"view must have a tag\");")
+                        it.value.forEach {
+                            block("if (\"${it.tag}_0\".equals(tag))") {
+                                if (it.isMerge) {
+                                    nl("return new ${it.`package`}.${it.implementationName}(bindingComponent, new android.view.View[]{view});")
+                                } else {
+                                    nl("return new ${it.`package`}.${it.implementationName}(bindingComponent, view);")
                                 }
-                                tab("throw new java.lang.IllegalArgumentException(\"The tag for ${firstVal.layoutname} is invalid. Received: \" + tag);");
                             }
                         }
+                        nl("throw new java.lang.IllegalArgumentException(\"The tag for ${firstVal.layoutname} is invalid. Received: \" + tag);");
                     }
                 }
                 if (generateTestOverride) {
@@ -94,20 +90,18 @@ class BindingMapperWriter(
             }
             nl("@Override")
             block("public ${libTypes.viewDataBinding} getDataBinder(${libTypes.dataBindingComponent} bindingComponent, android.view.View[] views, int layoutId)") {
-                block("switch(layoutId)") {
-                    layoutBinders.filter{it.isMerge }.groupBy{it.layoutname }.forEach {
-                        val firstVal = it.value[0]
-                        block("case ${firstVal.modulePackage}.R.layout.${firstVal.layoutname}:") {
-                            if (it.value.size == 1) {
-                                tab("return new ${firstVal.`package`}.${firstVal.implementationName}(bindingComponent, views);")
-                            } else {
-                                // we should check the tag to decide which layout we need to inflate
-                                nl("final Object tag = views[0].getTag();")
-                                nl("if(tag == null) throw new java.lang.RuntimeException(\"view must have a tag\");")
-                                it.value.forEach {
-                                    block("if (\"${it.tag}_0\".equals(tag))") {
-                                        nl("return new ${it.`package`}.${it.implementationName}(bindingComponent, views);")
-                                    }
+                layoutBinders.filter{it.isMerge }.groupBy{it.layoutname }.forEach {
+                    val firstVal = it.value[0]
+                    block("if (layoutId == ${firstVal.modulePackage}.R.layout.${firstVal.layoutname})") {
+                        if (it.value.size == 1) {
+                            nl("return new ${firstVal.`package`}.${firstVal.implementationName}(bindingComponent, views);")
+                        } else {
+                            // we should check the tag to decide which layout we need to inflate
+                            nl("final Object tag = views[0].getTag();")
+                            nl("if(tag == null) throw new java.lang.RuntimeException(\"view must have a tag\");")
+                            it.value.forEach {
+                                block("if (\"${it.tag}_0\".equals(tag))") {
+                                    nl("return new ${it.`package`}.${it.implementationName}(bindingComponent, views);")
                                 }
                             }
                         }
