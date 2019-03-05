@@ -890,7 +890,7 @@ abstract public class Expr implements VersionProvider, LocationScopeProvider {
      * @param childIndex The index into mChildren of the child to unwrap
      * @param type The expected type or null if the child should be fully unwrapped.
      */
-    protected void unwrapChildTo(int childIndex, ModelClass type) {
+    protected void unwrapChildTo(int childIndex, @Nullable ModelClass type) {
         final Expr child = mChildren.get(childIndex);
         Expr unwrapped = null;
         Expr expr = child;
@@ -899,11 +899,13 @@ abstract public class Expr implements VersionProvider, LocationScopeProvider {
                 && shouldUnwrap(type, expr.getResolvedType())) {
             unwrapped = mModel.methodCall(expr, simpleGetterName, Collections.EMPTY_LIST);
             if (unwrapped == this) {
-                if (type.isObservableField()) {
-                    L.w(ErrorMessages.OBSERVABLE_FIELD_GET, this);
-                }
-                else if (type.isLiveData()) {
-                    L.w(ErrorMessages.LIVEDATA_FIELD_GETVALUE, this);
+                if (type != null) {
+                    if (type.isObservableField()) {
+                        L.w(ErrorMessages.OBSERVABLE_FIELD_GET, this);
+                    }
+                    else if (type.isLiveData()) {
+                        L.w(ErrorMessages.LIVEDATA_FIELD_GETVALUE, this);
+                    }
                 }
                 return; // This was already unwrapped!
             }
