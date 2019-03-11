@@ -13,7 +13,7 @@
 
 package android.databinding.tool.ext
 
-val L = "\$L"
-val T = "\$T"
-val N = "\$N"
-val S = "\$S"
+const val L = "\$L"
+const val T = "\$T"
+const val N = "\$N"
+const val S = "\$S"

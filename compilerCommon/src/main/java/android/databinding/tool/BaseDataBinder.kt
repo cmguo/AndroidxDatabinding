@@ -53,13 +53,10 @@ class BaseDataBinder(
             // the dependency
             val binderWriter = BaseLayoutBinderWriter(BaseLayoutModel(it.value), libTypes)
             val spec = binderWriter.write()
-            val sb = StringBuilder()
             val pkg = it.value[0].bindingClassPackage
-            JavaFile.builder(pkg, spec).build()
-                    .writeTo(sb)
-            val className = it.value[0].bindingClassPackage + "." + it.value[0]
-                    .bindingClassName
-            writer.writeToFile(className, sb.toString())
+            val classContent = JavaFile.builder(pkg, spec).build().toString()
+            val className = pkg + "." + it.value[0].bindingClassName
+            writer.writeToFile(className, classContent)
             myLog.classInfoLog.addMapping(it.key, binderWriter.generateClassInfo())
 
             val layoutName = it.key

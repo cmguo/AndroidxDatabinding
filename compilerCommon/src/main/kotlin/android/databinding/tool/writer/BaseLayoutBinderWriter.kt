@@ -24,6 +24,7 @@ import android.databinding.tool.ext.toClassName
 import android.databinding.tool.ext.toTypeName
 import android.databinding.tool.store.GenClassInfoLog
 import com.squareup.javapoet.ClassName
+import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.FieldSpec
 import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterSpec
@@ -51,7 +52,7 @@ class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes)
     private val viewDataBinding = libTypes.viewDataBinding.toClassName()
     private val nonNull = libTypes.nonNull.toClassName()
     private val nullable = libTypes.nullable.toClassName()
-    private val dataBindingComponent = ClassName.get(Object::class.java)
+    private val dataBindingComponent = TypeName.OBJECT
     private val dataBindingUtil = libTypes.dataBindingUtil.toClassName()
     private val bindable = libTypes.bindable.toClassName()
     fun write(): TypeSpec {
@@ -79,7 +80,8 @@ class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes)
         val componentParam = ParameterSpec.builder(dataBindingComponent, "component").apply {
             addAnnotation(nullable)
         }.build()
-        val rLayoutFile = "${model.modulePackage}.R.layout.${model.baseFileName}"
+        val rLayoutFile = CodeBlock.of("$T.$N", ClassName.get(model.modulePackage, "R", "layout"),
+            model.baseFileName)
         val attachToRootParam = ParameterSpec.builder(TypeName.BOOLEAN, "attachToRoot").build()
         return listOf(
                 MethodSpec.methodBuilder("inflate").apply {
@@ -212,7 +214,7 @@ class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes)
             model.sortedTargets.filter { it.id != null }.forEach {
                 // todo might change if we start de-duping constructor params
                 val fieldName = model.fieldName(it)
-                addStatement("this.$L = $L", fieldName, fieldName)
+                addStatement("this.$1L = $1L", fieldName)
                 if (it.isBinder) {
                     addStatement("setContainedBinding(this.$L);", fieldName)
                 }
