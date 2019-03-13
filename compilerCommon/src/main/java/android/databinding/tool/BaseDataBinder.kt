@@ -22,7 +22,6 @@ import android.databinding.tool.store.ResourceBundle
 import android.databinding.tool.writer.BaseLayoutBinderWriter
 import android.databinding.tool.writer.BaseLayoutModel
 import android.databinding.tool.writer.JavaFileWriter
-import com.squareup.javapoet.JavaFile
 
 @Suppress("unused")// used by tools
 class BaseDataBinder(
@@ -52,11 +51,7 @@ class BaseDataBinder(
             // generate only if this belongs to us, otherwise, it is already generated in
             // the dependency
             val binderWriter = BaseLayoutBinderWriter(BaseLayoutModel(it.value), libTypes)
-            val spec = binderWriter.write()
-            val pkg = it.value[0].bindingClassPackage
-            val classContent = JavaFile.builder(pkg, spec).build().toString()
-            val className = pkg + "." + it.value[0].bindingClassName
-            writer.writeToFile(className, classContent)
+            writer.writeToFile(binderWriter.write())
             myLog.classInfoLog.addMapping(it.key, binderWriter.generateClassInfo())
 
             val layoutName = it.key

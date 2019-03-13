@@ -13,9 +13,9 @@
 
 package android.databinding.tool.writer;
 
+import com.squareup.javapoet.JavaFile;
 import org.apache.commons.io.FileUtils;
 
-import android.databinding.tool.processing.ScopedException;
 import android.databinding.tool.util.L;
 import android.databinding.tool.util.LoggedErrorException;
 
@@ -38,5 +38,9 @@ public abstract class JavaFileWriter {
         } catch (LoggedErrorException e) {
             // This will be logged later
         }
+    }
+
+    public final void writeToFile(JavaFile javafile) {
+        writeToFile(javafile.packageName + "." + javafile.typeSpec.name, javafile.toString());
     }
 }

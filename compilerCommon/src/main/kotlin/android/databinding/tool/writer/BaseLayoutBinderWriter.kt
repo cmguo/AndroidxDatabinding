@@ -26,6 +26,7 @@ import android.databinding.tool.store.GenClassInfoLog
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.FieldSpec
+import com.squareup.javapoet.JavaFile
 import com.squareup.javapoet.MethodSpec
 import com.squareup.javapoet.ParameterSpec
 import com.squareup.javapoet.TypeName
@@ -55,7 +56,12 @@ class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes)
     private val dataBindingComponent = TypeName.OBJECT
     private val dataBindingUtil = libTypes.dataBindingUtil.toClassName()
     private val bindable = libTypes.bindable.toClassName()
-    fun write(): TypeSpec {
+
+    fun write(): JavaFile {
+        return JavaFile.builder(binderTypeName.packageName(), createType()).build()
+    }
+
+    private fun createType(): TypeSpec {
         return TypeSpec.classBuilder(model.bindingClassName).apply {
             superclass(viewDataBinding)
             addModifiers(Modifier.ABSTRACT, Modifier.PUBLIC)
