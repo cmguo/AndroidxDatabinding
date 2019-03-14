@@ -45,9 +45,9 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module-library">
       <library name="javapoet" type="repository">
-        <properties maven-id="com.squareup:javapoet:1.8.0" />
+        <properties maven-id="com.squareup:javapoet:1.10.0" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/javapoet/1.8.0/javapoet-1.8.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/com/squareup/javapoet/1.10.0/javapoet-1.10.0.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

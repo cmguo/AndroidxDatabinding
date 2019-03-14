@@ -234,12 +234,7 @@ private class JavaFileGenerator(
         }
 
         addStatement("return new $T($L)", binder.generatedTypeName,
-            // TODO use CodeBlock.join(constructorParams, ",$W") once JavaPoet is updated to 1.10.0
-            CodeBlock.of(
-                "$L,$W".repeat(constructorParams.size).removeSuffix(",$W"),
-                *constructorParams.toTypedArray()
-            )
-        )
+            CodeBlock.join(constructorParams, ",$W"))
 
         if (missingId != null) {
             endControlFlow()
