@@ -22,6 +22,9 @@ import android.databinding.tool.store.ResourceBundle
 import android.databinding.tool.writer.BaseLayoutBinderWriter
 import android.databinding.tool.writer.BaseLayoutModel
 import android.databinding.tool.writer.JavaFileWriter
+import android.databinding.tool.writer.generatedClassInfo
+import android.databinding.tool.writer.toJavaFile
+import android.databinding.tool.writer.toViewBinder
 
 @Suppress("unused")// used by tools
 class BaseDataBinder(
@@ -41,20 +44,32 @@ class BaseDataBinder(
     }
     @Suppress("unused")// used by android gradle plugin
     fun generateAll(writer : JavaFileWriter) {
-        val libTypes = LibTypes(useAndroidX = input.args.useAndroidX)
         input.invalidatedClasses.forEach {
             writer.deleteFile(it)
         }
+
         val myLog = LayoutInfoLog()
         myLog.addAll(input.unchangedLog)
-        resourceBundle.layoutFileBundlesInSource.groupBy { it.mFileName }.forEach {
-            // generate only if this belongs to us, otherwise, it is already generated in
-            // the dependency
-            val binderWriter = BaseLayoutBinderWriter(BaseLayoutModel(it.value), libTypes)
-            writer.writeToFile(binderWriter.write())
-            myLog.classInfoLog.addMapping(it.key, binderWriter.generateClassInfo())
 
+        val useAndroidX = input.args.useAndroidX
+        val libTypes = LibTypes(useAndroidX = useAndroidX)
+
+        // generate only if this belongs to us, otherwise, it is already generated in
+        // the dependency
+        resourceBundle.layoutFileBundlesInSource.groupBy { it.mFileName }.forEach {
             val layoutName = it.key
+            val layoutModel = BaseLayoutModel(it.value)
+
+            val binderWriter = BaseLayoutBinderWriter(layoutModel, libTypes)
+            writer.writeToFile(binderWriter.write())
+            myLog.classInfoLog.addMapping(layoutName, binderWriter.generateClassInfo())
+
+            if (false) {
+                val viewBinder = layoutModel.toViewBinder()
+                writer.writeToFile(viewBinder.toJavaFile(useLegacyAnnotations = !useAndroidX))
+                myLog.classInfoLog.addMapping(layoutName, viewBinder.generatedClassInfo())
+            }
+
             it.value.forEach {
                 it.bindingTargetBundles.forEach { bundle ->
                     if (bundle.isBinder) {

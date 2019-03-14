@@ -25,6 +25,7 @@ const val L = "\$L"
 const val T = "\$T"
 const val N = "\$N"
 const val S = "\$S"
+const val W = "\$W"
 
 fun javaFile(
     packageName: String,
@@ -57,3 +58,7 @@ fun fieldSpec(
     type: TypeName,
     body: FieldSpec.Builder.() -> Unit = {}
 ): FieldSpec = FieldSpec.builder(type, name).apply(body).build()
+
+fun String.toClassName() : ClassName {
+    return ClassName.bestGuess(this)
+}

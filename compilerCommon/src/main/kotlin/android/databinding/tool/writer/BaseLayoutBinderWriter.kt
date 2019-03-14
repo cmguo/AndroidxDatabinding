@@ -38,10 +38,6 @@ import javax.lang.model.element.Modifier
 
 class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes) {
     companion object {
-        private val ANDROID_VIEW = ClassName.get("android.view", "View")
-        private val ANDROID_LAYOUT_INFLATOR = ClassName.get("android.view", "LayoutInflater")
-        private val ANDROID_VIEW_GROUP = ClassName.get("android.view", "ViewGroup")
-
         private val DEPRECATED = ClassName.get(java.lang.Deprecated::class.java)
 
         private val JAVADOC_BINDING_COMPONENT = """
@@ -75,7 +71,7 @@ class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes)
     }
 
     private fun createStaticInflaters(): List<MethodSpec> {
-        val inflaterParam = parameterSpec(ANDROID_LAYOUT_INFLATOR, "inflater") {
+        val inflaterParam = parameterSpec(ANDROID_LAYOUT_INFLATER, "inflater") {
             addAnnotation(nonNull)
         }
         val viewGroupParam = parameterSpec(ANDROID_VIEW_GROUP, "root") {
@@ -204,8 +200,7 @@ class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes)
         // TODO de-dup construtor param names
         model.sortedTargets.filter { it.id != null }
                 .forEach {
-                    val fieldType = (it.interfaceType ?: it.fullClassName)
-                            .toTypeName(libTypes, model.importsByAlias)
+                    val fieldType = it.fieldType.toTypeName(libTypes, model.importsByAlias)
                     addParameter(parameterSpec(fieldType, model.fieldName(it)))
                 }
         addStatement("super($N, $N, $N)", componentParam, viewParam, localFieldCountParam)
@@ -242,8 +237,7 @@ class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes)
         return model.sortedTargets
                 .filter { it.id != null }
                 .map {
-                    val fieldType = (it.interfaceType ?: it.fullClassName)
-                            .toTypeName(libTypes, model.importsByAlias)
+                    val fieldType = it.fieldType.toTypeName(libTypes, model.importsByAlias)
                     fieldSpec(model.fieldName(it), fieldType) {
                         addModifiers(Modifier.FINAL)
                         addModifiers(if (it.id != null) Modifier.PUBLIC else Modifier.PRIVATE)

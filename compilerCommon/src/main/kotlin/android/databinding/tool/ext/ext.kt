@@ -185,10 +185,6 @@ fun String.toTypeName(useAndroidX: Boolean) : TypeName {
     return toTypeName(useAndroidX = useAndroidX, imports = null, useReplacements = false)
 }
 
-fun String.toClassName() : ClassName {
-    return ClassName.bestGuess(this)
-}
-
 private fun String.toTypeName(
         libTypes: LibTypes,
         imports: Map<String, String>?,
