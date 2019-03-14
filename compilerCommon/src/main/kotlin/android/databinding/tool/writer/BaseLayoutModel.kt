@@ -16,7 +16,7 @@
 
 package android.databinding.tool.writer
 
-import android.databinding.tool.ext.androidId
+import android.databinding.tool.ext.parseXmlResourceReference
 import android.databinding.tool.ext.stripNonJava
 import android.databinding.tool.store.GenClassInfoLog
 import android.databinding.tool.store.ResourceBundle
@@ -128,7 +128,7 @@ class BaseLayoutModel(private val variations: List<LayoutFileBundle>) {
         return if (target.id == null) {
             "boundView" + indexFromTag(target.tag)
         } else {
-            target.id.androidId().stripNonJava()
+            target.id.parseXmlResourceReference().name.stripNonJava()
         }
     }
 

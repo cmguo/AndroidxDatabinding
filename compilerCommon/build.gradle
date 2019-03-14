@@ -35,6 +35,7 @@ sourceSets {
     test {
         java {
             srcDir 'src/test/java'
+            srcDir 'src/test/kotlin'
         }
     }
 

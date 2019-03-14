@@ -8,6 +8,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src/main/xml-gen" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/main/grammar-gen" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/src/test/kotlin" isTestSource="true" />
       <excludeFolder url="file://$MODULE_DIR$/../../../out/build/dataBinding/compilerCommon/build" />
       <excludeFolder url="file://$MODULE_DIR$/.gradle" />
     </content>

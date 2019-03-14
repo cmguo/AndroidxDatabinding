@@ -104,14 +104,51 @@ fun Class<*>.toJavaCode(): String {
     }
 }
 
-fun String.androidId(): String {
-    val name = this.split("/")[1]
-    if (name.contains(':')) {
-        return name.split(':')[1]
-    } else {
-        return name
+fun String.parseXmlResourceReference(): XmlResourceReference {
+    require(startsWith('@')) { "Reference must start with '@': $this" }
+
+    val creating = length > 1 && this[1] == '+'
+    val start = if (creating) 2 else 1
+    val colon = indexOf(':', start)
+    val slash = indexOf('/', start)
+
+    val type: String
+    val namespace: String?
+    val name: String
+    when {
+        // @id/foo, @+id/foo
+        colon == -1 && slash != -1 -> {
+            type = substring(start, slash)
+            namespace = null
+            name = substring(slash + 1)
+        }
+        // @android:id/foo, @+android:id/foo
+        colon != -1 && slash != -1 && colon < slash -> {
+            type = substring(colon + 1, slash)
+            namespace = substring(start, colon)
+            name = substring(slash + 1)
+        }
+        // @id/android:foo, @+id/android:foo
+        colon != -1 && slash != -1 && slash < colon -> {
+            type = substring(start, slash)
+            namespace = substring(slash + 1, colon)
+            name = substring(colon + 1)
+        }
+        else -> throw IllegalArgumentException("Invalid resource format: $this")
     }
+    require(namespace == null || namespace.isNotEmpty()) { "Namespace cannot be empty: $this" }
+    require(name.isNotEmpty()) { "Name cannot be empty: $this" }
+    require(type.isNotEmpty()) { "Type cannot be empty: $this" }
+
+    return XmlResourceReference(namespace, type, name, creating)
 }
+
+data class XmlResourceReference(
+    val namespace: String?,
+    val type: String,
+    val name: String,
+    val creating: Boolean
+)
 
 fun String.toCamelCase(): String {
     val split = this.split("_")

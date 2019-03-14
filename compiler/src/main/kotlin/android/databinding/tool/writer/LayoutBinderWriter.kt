@@ -30,9 +30,9 @@ import android.databinding.tool.expr.TernaryExpr
 import android.databinding.tool.expr.localizeGlobalVariables
 import android.databinding.tool.expr.shouldLocalizeInCallbacks
 import android.databinding.tool.expr.toCode
-import android.databinding.tool.ext.androidId
 import android.databinding.tool.ext.br
 import android.databinding.tool.ext.lazyProp
+import android.databinding.tool.ext.parseXmlResourceReference
 import android.databinding.tool.ext.stripNonJava
 import android.databinding.tool.ext.versionedLazy
 import android.databinding.tool.processing.ErrorMessages
@@ -122,7 +122,7 @@ val BindingTarget.readableName by lazyProp { target: BindingTarget ->
     if (target.id == null) {
         "boundView" + indexFromTag(target.tag)
     } else {
-        target.id.androidId().stripNonJava()
+        target.id.parseXmlResourceReference().name.stripNonJava()
     }
 }
 
@@ -149,10 +149,11 @@ val BindingTarget.fieldName : String by lazyProp { target: BindingTarget ->
 }
 
 val BindingTarget.androidId by lazyProp { target: BindingTarget ->
-    if (target.id.startsWith("@android:id/")) {
-        "android.R.id.${target.id.androidId()}"
+    val reference = target.id.parseXmlResourceReference()
+    if (reference.namespace == "android") {
+        "android.R.id.${reference.name}"
     } else {
-        "R.id.${target.id.androidId()}"
+        "R.id.${reference.name}"
     }
 }
 
