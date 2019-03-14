@@ -239,7 +239,7 @@ class AnnotationClass(
         return typeUtils.isAssignable(thatAnnotationClass.typeMirror, this.typeMirror)
     }
 
-    override val declaredMethods by lazy(LazyThreadSafetyMode.NONE) {
+    override val allMethods by lazy(LazyThreadSafetyMode.NONE) {
         if (typeMirror.kind == TypeKind.DECLARED) {
             val declaredType = typeMirror as DeclaredType
             val elementUtils = elementUtils
@@ -290,7 +290,7 @@ class AnnotationClass(
     override val jniDescription: String
         get() = computedJniDescription
 
-    override val declaredFields by lazy(LazyThreadSafetyMode.NONE) {
+    override val allFields by lazy(LazyThreadSafetyMode.NONE) {
         if (typeMirror.kind == TypeKind.DECLARED) {
             val declaredType = typeMirror as DeclaredType
             val elementUtils = elementUtils

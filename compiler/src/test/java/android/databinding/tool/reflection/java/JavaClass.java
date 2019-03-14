@@ -17,6 +17,12 @@ import android.databinding.tool.reflection.ModelClass;
 import android.databinding.tool.reflection.ModelField;
 import android.databinding.tool.reflection.ModelMethod;
 import android.databinding.tool.reflection.TypeUtil;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -233,18 +239,44 @@ public class JavaClass extends ModelClass {
 
     @NotNull
     @Override
-    public List<ModelField> getDeclaredFields() {
-        return Stream.of(mClass.getDeclaredFields())
-                .map(JavaField::new)
-                .collect(Collectors.toList());
+    public List<ModelField> getAllFields() {
+        Map<String, Field> fields = new HashMap<>();
+        for (Class clazz = mClass; clazz != null; clazz = clazz.getSuperclass()) {
+            for (Field field : clazz.getDeclaredFields()) {
+                if (!fields.containsKey(field.getName())) {
+                    fields.put(field.getName(), field);
+                }
+            }
+        }
+
+        return fields.values().stream()
+          .map(JavaField::new)
+          .collect(Collectors.toList());
     }
 
     @NotNull
     @Override
-    public List<ModelMethod> getDeclaredMethods() {
-        return Stream.of(mClass.getDeclaredMethods())
-                .map(JavaMethod::new)
-                .collect(Collectors.toList());
+    public List<ModelMethod> getAllMethods() {
+        ArrayList<Method> methodList = new ArrayList<>();
+        for (Class clazz = mClass; clazz != null; clazz = clazz.getSuperclass()) {
+            for (Method method : clazz.getDeclaredMethods()) {
+                boolean isOverridden = false;
+                for (Method existedMethod : methodList) {
+                    if (method.getName().equals(existedMethod.getName()) &&
+                        Arrays.deepEquals(method.getParameterTypes(), existedMethod.getParameterTypes())) {
+                        isOverridden = true;
+                        break;
+                    }
+                }
+                if (!isOverridden) {
+                    methodList.add(method);
+                }
+            }
+        }
+
+        return methodList.stream()
+          .map(JavaMethod::new)
+          .collect(Collectors.toList());
     }
 
     @Override

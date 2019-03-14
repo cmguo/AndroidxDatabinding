@@ -276,7 +276,7 @@ abstract class ModelClass {
      * Returns a list of all abstract methods in the type.
      */
     val abstractMethods: List<ModelMethod> by lazy(LazyThreadSafetyMode.NONE) {
-        declaredMethods.filter {
+        allMethods.filter {
             it.isAbstract
         }
     }
@@ -297,9 +297,15 @@ abstract class ModelClass {
             return false
         }
 
-    abstract val declaredFields: List<ModelField>
+    /**
+     * @return the list of fields in the class and all its superclasses.
+     */
+    abstract val allFields: List<ModelField>
 
-    abstract val declaredMethods: List<ModelMethod>
+    /**
+     * @return the list of methods in the class and all its superclasses.
+     */
+    abstract val allMethods: List<ModelMethod>
 
     // implementation only so that PSI model doesn't break
     open val typeName: TypeName
@@ -366,7 +372,7 @@ abstract class ModelClass {
      */
     private fun getMethods(name: String, args: List<ModelClass>, staticOnly: Boolean,
                            allowProtected: Boolean, unwrapObservableFields: Boolean): List<ModelMethod> {
-        return declaredMethods.filter { method ->
+        return allMethods.filter { method ->
             (method.isPublic || (allowProtected && method.isProtected))
                     && (!staticOnly || method.isStatic)
                     && name == method.name
@@ -382,7 +388,7 @@ abstract class ModelClass {
      * @return An array containing all public methods with the given name and number of parameters.
      */
     fun getMethods(name: String, numParameters: Int): List<ModelMethod> {
-        return declaredMethods.filter { method ->
+        return allMethods.filter { method ->
             method.isPublic &&
                     !method.isStatic &&
                     name == method.name &&
@@ -535,7 +541,7 @@ abstract class ModelClass {
     }
 
     private fun getField(name: String, allowPrivate: Boolean, isStatic: Boolean): ModelField? {
-        val fields = declaredFields
+        val fields = allFields
         for (field in fields) {
             val nameMatch = name == field.name || name == stripFieldName(field.name)
             if (nameMatch && field.isStatic == isStatic &&
@@ -574,7 +580,7 @@ abstract class ModelClass {
      * listener methods during Expr.resolveListeners.
      */
     fun findMethods(name: String, staticOnly: Boolean): List<ModelMethod> {
-        return declaredMethods.filter { method ->
+        return allMethods.filter { method ->
             method.isPublic &&
                     method.name == name &&
                     (!staticOnly || method.isStatic)

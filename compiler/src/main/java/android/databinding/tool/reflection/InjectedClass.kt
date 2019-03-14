@@ -81,15 +81,15 @@ class InjectedClass(private val mClassName: String, private val mSuperClass: Str
     }
 
     // not cached because it is mutable
-    override val declaredFields: List<ModelField>
+    override val allFields: List<ModelField>
         get() {
-            return superclass.declaredFields + mFields
+            return superclass.allFields + mFields
         }
 
     // not cached because it is mutable
-    override val declaredMethods: List<ModelMethod>
+    override val allMethods: List<ModelMethod>
         get() {
-            return superclass.declaredMethods + mMethods
+            return superclass.allMethods + mMethods
         }
 
     override val typeName: TypeName by lazy(LazyThreadSafetyMode.NONE) {
