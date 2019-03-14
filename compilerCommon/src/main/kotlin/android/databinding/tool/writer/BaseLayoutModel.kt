@@ -16,6 +16,7 @@
 
 package android.databinding.tool.writer
 
+import android.databinding.tool.ext.mapEach
 import android.databinding.tool.ext.parseXmlResourceReference
 import android.databinding.tool.ext.stripNonJava
 import android.databinding.tool.store.GenClassInfoLog
@@ -76,13 +77,24 @@ class BaseLayoutModel(private val variations: List<LayoutFileBundle>) {
         variables = mergedVars
     }
 
-    fun inEveryLayout(target: BindingTargetBundle): Boolean {
-        // find a variation which does not have this target
-        return variations.all { variation ->
-            variation.bindingTargetBundles.any { otherTarget ->
-                otherTarget.id == target.id && otherTarget.isUsed
+    /**
+     * Returns a pair of two lists:
+     * <ol>
+     *   <li>Layout folder names in which [target] is present in this layout.
+     *   <li>Layout folder names in which [target] is absent from this layout.
+     * </ol>
+     * If the second list is non-empty, the view for [target] may not be available at runtime depending on the configuration.
+     */
+    fun layoutConfigurationMembership(
+        target: BindingTargetBundle
+    ): Pair<List<String>, List<String>> {
+        return variations
+            .partition {
+                it.bindingTargetBundles.any { otherTarget ->
+                    otherTarget.id == target.id && otherTarget.isUsed
+                }
             }
-        }
+            .mapEach { it.map(LayoutFileBundle::getDirectory).sorted() }
     }
 
     private fun getScopeNames(scope: JavaScope): MutableMap<Any, String> {

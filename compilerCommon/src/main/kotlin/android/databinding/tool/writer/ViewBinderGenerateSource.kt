@@ -90,8 +90,13 @@ private class JavaFileGenerator(private val binder: ViewBinder, useLegacyAnnotat
 
             // TODO addJavadoc when types were normalized to View due to different declarations.
 
-            if (binding.optional) {
-                // TODO addJavadoc about in which configurations this view is present or absent.
+            if (binding.absentConfigurations.isNotEmpty()) {
+                addJavadoc(
+                    renderConfigurationJavadoc(
+                        binding.presentConfigurations,
+                        binding.absentConfigurations
+                    )
+                )
                 addAnnotation(nullable)
             } else {
                 addAnnotation(nonNull)
@@ -110,7 +115,7 @@ private class JavaFileGenerator(private val binder: ViewBinder, useLegacyAnnotat
         binder.bindings.forEach { binding ->
             val name = fieldNames.get(binding)
             addParameter(parameterSpec(binding.type, name) {
-                addAnnotation(if (binding.optional) nullable else nonNull)
+                addAnnotation(if (binding.absentConfigurations.isEmpty()) nonNull else nullable)
             })
             addStatement("this.$1N = $1N", name)
         }
@@ -193,7 +198,7 @@ private class JavaFileGenerator(private val binder: ViewBinder, useLegacyAnnotat
             addStatement("$T $name = $N.findViewById($L)",
                 binding.type, rootParam, binding.idReference.asCode())
 
-            if (!binding.optional) {
+            if (binding.absentConfigurations.isEmpty()) {
                 beginControlFlow("if ($name == null)")
 
                 // String.concat(String) is used here as an optimization for dex size. The prefix

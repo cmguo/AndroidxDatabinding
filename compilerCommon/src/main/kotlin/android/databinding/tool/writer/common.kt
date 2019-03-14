@@ -24,3 +24,19 @@ internal val ANDROID_LAYOUT_INFLATER = ClassName.get("android.view", "LayoutInfl
 internal val ANDROID_VIEW_GROUP = ClassName.get("android.view", "ViewGroup")
 
 internal val BindingTargetBundle.fieldType: String get() = interfaceType ?: fullClassName
+
+internal fun renderConfigurationJavadoc(present: List<String>, absent: List<String>): String {
+    return """
+        |This binding is not available in all configurations.
+        |<p>
+        |Present:
+        |<ul>
+        |${present.joinToString("\n|") { "  <li>$it/</li>" }}
+        |</ul>
+        |
+        |Absent:
+        |<ul>
+        |${absent.joinToString("\n|") { "  <li>$it/</li>" }}
+        |</ul>
+        |""".trimMargin() // Trailing newline for JavaPoet.
+}

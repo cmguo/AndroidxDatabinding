@@ -25,7 +25,6 @@ import android.databinding.tool.store.ResourceBundle.BindingTargetBundle
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.TypeName
-import java.lang.IllegalArgumentException
 
 /** The model for a view binder which corresponds to a single layout and its contained views. */
 data class ViewBinder(
@@ -45,7 +44,10 @@ data class ViewBinding(
     val name: String,
     val type: TypeName,
     val idReference: ResourceReference,
-    val optional: Boolean
+    /** Layout folders that this view is present in. */
+    val presentConfigurations: List<String>,
+    /** Layout folders that this view is absent from. A non-empty list indicates this view binding is optional! */
+    val absentConfigurations: List<String>
 ) {
     init {
         require(idReference.type == "id") { "ID reference type must be 'id': $idReference" }
@@ -60,12 +62,14 @@ fun BaseLayoutModel.toViewBinder(): ViewBinder {
     fun BindingTargetBundle.toBinding(): ViewBinding {
         // TODO would modulePackage ever really be null? when?
         val idReference = id.parseXmlResourceReference().toResourceReference(modulePackage!!)
+        val (present, absent) = layoutConfigurationMembership(this)
 
         return ViewBinding(
-            name = fieldName(this),
-            type = fieldType.toClassName(),
-            idReference = idReference,
-            optional = !inEveryLayout(this)
+          name = fieldName(this),
+          type = fieldType.toClassName(),
+          idReference = idReference,
+          presentConfigurations = present,
+          absentConfigurations = absent
         )
     }
 

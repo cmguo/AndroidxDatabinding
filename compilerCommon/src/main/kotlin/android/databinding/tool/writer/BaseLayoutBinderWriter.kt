@@ -241,7 +241,14 @@ class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes)
                     fieldSpec(model.fieldName(it), fieldType) {
                         addModifiers(Modifier.FINAL)
                         addModifiers(if (it.id != null) Modifier.PUBLIC else Modifier.PRIVATE)
-                        addAnnotation(if (model.inEveryLayout(it)) nonNull else nullable)
+                        val (present, absent) = model.layoutConfigurationMembership(it)
+
+                        if (absent.isNotEmpty()) {
+                            addJavadoc(renderConfigurationJavadoc(present, absent))
+                            addAnnotation(nullable)
+                        } else {
+                            addAnnotation(nonNull)
+                        }
                     }
                 }
     }

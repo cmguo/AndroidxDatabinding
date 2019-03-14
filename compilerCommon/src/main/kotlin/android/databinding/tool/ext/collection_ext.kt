@@ -27,3 +27,5 @@ public fun List<String>.joinToCamelCaseAsVar(): String = when(size) {
     1 -> this[0].toCamelCaseAsVar()
     else -> get(0).toCamelCaseAsVar() + drop(1).joinToCamelCase()
 }
+
+fun <T, R> Pair<T, T>.mapEach(body: (T) -> R): Pair<R, R> = body(first) to body(second)
