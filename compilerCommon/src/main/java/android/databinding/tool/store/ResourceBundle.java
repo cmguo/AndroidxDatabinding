@@ -22,15 +22,26 @@ import android.databinding.tool.processing.scopes.LocationScopeProvider;
 import android.databinding.tool.util.L;
 import android.databinding.tool.util.ParserHelper;
 import android.databinding.tool.util.Preconditions;
-
 import android.databinding.tool.util.RelativizableFile;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
+import com.google.common.base.MoreObjects;
+import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
 import org.apache.commons.io.filefilter.TrueFileFilter;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlElementWrapper;
+import javax.xml.bind.annotation.XmlRootElement;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,17 +60,6 @@ import java.util.Set;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.bind.annotation.XmlAccessType;
-import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlAttribute;
-import javax.xml.bind.annotation.XmlElement;
-import javax.xml.bind.annotation.XmlElementWrapper;
-import javax.xml.bind.annotation.XmlRootElement;
 
 /**
  * This is a serializable class that can keep the result of parsing layout files.
@@ -172,7 +172,36 @@ public class ResourceBundle implements Serializable {
         return merged;
     }
 
-    public void validateMultiResLayouts() {
+    public void validateAndRegisterErrors() {
+        validateBindingTargetIds();
+        validateMultiResLayouts();
+    }
+
+    private void validateBindingTargetIds() {
+        mLayoutBundles.forEach((name, layoutFileBundles) -> {
+            layoutFileBundles.forEach(bundle -> {
+                Set<String> ids = new HashSet<>();
+                Set<String> conflictingIds = new HashSet<>();
+                bundle.getBindingTargetBundles().forEach(bindingTarget -> {
+                    String id = bindingTarget.getId();
+                    if (id != null && !ids.add(id)) {
+                        conflictingIds.add(id);
+                    }
+                });
+                bundle.getBindingTargetBundles().forEach(bindingTarget -> {
+                    String id = bindingTarget.getId();
+                    if (id != null && conflictingIds.contains(id)) {
+                        String error = String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                                bindingTarget.getAsSimplifiedXmlTag());
+                        Scope.registerError(error, bundle, bindingTarget);
+                    }
+                });
+            });
+        });
+    }
+
+
+    private void validateMultiResLayouts() {
         for (List<LayoutFileBundle> layoutFileBundles : mLayoutBundles.values()) {
             for (LayoutFileBundle layoutFileBundle : layoutFileBundles) {
                 List<BindingTargetBundle> unboundIncludes = new ArrayList<>();
@@ -900,6 +929,10 @@ public class ResourceBundle implements Serializable {
             return mIncludedLayout;
         }
 
+        public String getViewName() {
+            return mViewName;
+        }
+
         public boolean isBinder() {
             return mIncludedLayout != null && (!"android.view.View".equals(mInterfaceType)
                     || !"android.view.View".equals(mViewName));
@@ -975,6 +1008,25 @@ public class ResourceBundle implements Serializable {
 
         public String getInterfaceType() {
             return mInterfaceType;
+        }
+
+        /**
+         * Used for error reporting
+         */
+        public String getAsSimplifiedXmlTag() {
+            String xmlElementType;
+            if (mViewName != null) {
+                xmlElementType = mViewName;
+            } else if (mIncludedLayout != null) {
+                xmlElementType = "include";
+            } else {
+                xmlElementType = "view";
+            }
+            if (mId != null) {
+                return String.format("<%s id=\"%s\">", xmlElementType, mId);
+            } else {
+                return String.format("<%s>", xmlElementType);
+            }
         }
 
         @Override

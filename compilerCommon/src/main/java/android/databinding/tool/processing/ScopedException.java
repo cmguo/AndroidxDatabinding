@@ -102,12 +102,11 @@ public class ScopedException extends RuntimeException {
     public String createHumanReadableMessage() {
         ScopedErrorReport scopedError = getScopedErrorReport();
         StringBuilder sb = new StringBuilder();
-        sb.append("ERROR: ").append(super.getMessage()).append("\n\n")
-            .append("file://").append(scopedError.getFilePath());
-        if (scopedError.getLocations() != null && scopedError.getLocations().size() > 0) {
+        sb.append("ERROR: ").append(super.getMessage())
+            .append(" file://").append(scopedError.getFilePath());
+        if (scopedError.getLocations() != null && !scopedError.getLocations().isEmpty()) {
             sb.append(" Line:").append(scopedError.getLocations().get(0).startLine);
         }
-        sb.append("\n");
         return sb.toString();
     }
 

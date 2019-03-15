@@ -21,10 +21,14 @@ import android.databinding.tool.processing.ScopedErrorReport;
 import android.databinding.tool.processing.ScopedException;
 import android.databinding.tool.store.Location;
 import com.google.common.base.Joiner;
+import com.google.common.base.Predicate;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.apache.commons.lang3.StringUtils;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.hamcrest.CoreMatchers;
+import org.hamcrest.MatcherAssert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -32,8 +36,14 @@ import org.junit.runners.Parameterized;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -117,7 +127,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         Location loc = report.getLocations().get(0);
         if (expectedExtract != null) {
             String extract = extract(targetFile, loc);
-            assertEquals(expectedExtract, extract);
+            assertEquals(scopedException.getMessage(), expectedExtract, extract);
         }
         final File errorFile = new File(report.getFilePath());
         assertTrue(errorFile.exists());
@@ -267,6 +277,59 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         copyResourceTo("/layout/basic_layout.xml", "/app/src/main/res/layout/app_layout.xml");
         CompilationResult result = runGradle("assembleDebug");
         assertEquals(result.error, 0, result.resultCode);
+    }
+
+    @Test
+    public void testConflictingIds() throws IOException, URISyntaxException, InterruptedException {
+        prepareProject();
+        copyResourceTo("/layout/duplicate_ids.xml",
+                "/app/src/main/res/layout/duplicate_ids.xml");
+        CompilationResult result = runGradle("assembleDebug");
+        List<ScopedException> exceptions = result.getBindingExceptions();
+        assertMessages(exceptions,
+                String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                        "<TextView id=\"@+id/shared_id\">"),
+                String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                        "<TextView id=\"@+id/shared_id\">"));
+    }
+
+    @Test
+    public void testConflictingIds_include() throws IOException, URISyntaxException, InterruptedException {
+        prepareProject();
+        copyResourceTo("/layout/basic_layout.xml", "/app/src/main/res/layout/basic_layout.xml");
+        copyResourceTo("/layout/duplicate_include_ids.xml",
+                "/app/src/main/res/layout/duplicate_include_ids.xml");
+        CompilationResult result = runGradle("assembleDebug");
+        List<ScopedException> exceptions = result.getBindingExceptions();
+        assertMessages(exceptions,
+                String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                        "<include id=\"@+id/shared_id\">"),
+                String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                        "<include id=\"@+id/shared_id\">"));
+    }
+
+    @Test
+    public void testConflictingIds_includeVsView() throws IOException, URISyntaxException, InterruptedException {
+        prepareProject();
+        copyResourceTo("/layout/basic_layout.xml", "/app/src/main/res/layout/basic_layout.xml");
+        copyResourceTo("/layout/duplicate_include_vs_view_ids.xml",
+                "/app/src/main/res/layout/duplicate_include_vs_view_ids.xml");
+        CompilationResult result = runGradle("assembleDebug");
+        List<ScopedException> exceptions = result.getBindingExceptions();
+        assertMessages(exceptions,
+                String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                        "<TextView id=\"@+id/shared_id\">"),
+                String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                        "<include id=\"@+id/shared_id\">"));
+    }
+
+    private void assertMessages(List<ScopedException> exceptions,
+                                String... messages) {
+        List<String> actual = exceptions.stream()
+                .map(ScopedException::getBareMessage)
+                .collect(Collectors.toList());
+        MatcherAssert.assertThat(actual, CoreMatchers.hasItems(messages));
+        MatcherAssert.assertThat(actual.size(), CoreMatchers.is(messages.length));
     }
 
     // TODO: reenable this test once it works.

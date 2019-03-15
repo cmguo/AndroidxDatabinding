@@ -16,6 +16,7 @@
 
 package android.databinding.tool
 
+import android.databinding.tool.processing.Scope
 import android.databinding.tool.store.LayoutInfoInput
 import android.databinding.tool.store.LayoutInfoLog
 import android.databinding.tool.store.ResourceBundle
@@ -40,7 +41,7 @@ class BaseDataBinder(
                     }
                 }
         resourceBundle.addDependencyLayouts(input.existingBindingClasses)
-        resourceBundle.validateMultiResLayouts()
+        resourceBundle.validateAndRegisterErrors()
     }
     @Suppress("unused")// used by android gradle plugin
     fun generateAll(writer : JavaFileWriter) {
@@ -79,5 +80,8 @@ class BaseDataBinder(
             }
         }
         input.saveLog(myLog)
+        // data binding will eat some errors to be able to report them later on. This is a good
+        // time to report them after the processing is done.
+        Scope.assertNoError()
     }
 }
