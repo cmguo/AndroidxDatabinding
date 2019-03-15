@@ -88,7 +88,10 @@ iml_module(
     ],
     iml_files = ["compilerCommon/db-compilerCommon.iml"],
     test_coverage = True,
-    test_srcs = ["compilerCommon/src/test/java"],
+    test_srcs = [
+        "compilerCommon/src/test/java",
+        "compilerCommon/src/test/kotlin",
+    ],
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
     exports = [
