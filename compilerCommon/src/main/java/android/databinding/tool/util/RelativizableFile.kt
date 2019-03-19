@@ -46,14 +46,26 @@ class RelativizableFile private constructor(
 
   companion object {
 
+    /**
+     * Creates a [RelativizableFile] with a base directory and a relative path from the base
+     * directory.
+     */
     @JvmStatic
     fun fromRelativeFile(baseDir: File, relativeFile: File): RelativizableFile {
       return RelativizableFile(baseDir, relativeFile)
     }
 
+    /**
+     * Creates a [RelativizableFile] with a base directory and a relative path from the base
+     * directory if the base directory is given and it is a parent of the given absolute path.
+     * Otherwise, this method creates a [RelativizableFile] with the given absolute path only.
+     */
     @JvmStatic
     fun fromAbsoluteFile(absoluteFile: File, baseDir: File? = null): RelativizableFile {
-      return if (baseDir != null) {
+      check(absoluteFile.isAbsolute) { "${absoluteFile.path} is not an absolute path" }
+      baseDir?.let { check(it.isAbsolute) { "${it.path} is not an absolute path" } }
+
+      return if (baseDir != null && absoluteFile.absolutePath.startsWith(baseDir.absolutePath)) {
         fromRelativeFile(baseDir, baseDir.toPath().relativize(absoluteFile.toPath()).toFile())
       } else {
         RelativizableFile(null, absoluteFile)

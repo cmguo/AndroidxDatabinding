@@ -63,31 +63,29 @@ class RelativizableFileTest {
 
   @Test
   fun testFromAbsoluteFileWithBaseDir() {
-    val file = RelativizableFile.fromAbsoluteFile(File(path("/a/b/c")), File(path("/a")))
+    var file = RelativizableFile.fromAbsoluteFile(File(path("/a/b/c")), File(path("/a")))
     assertEquals(path("/a/b/c"), file.absoluteFile.path)
     assertEquals(path("/a"), file.baseDir!!.path)
     assertEquals(path("b/c"), file.relativeFile!!.path)
 
     try {
       RelativizableFile.fromAbsoluteFile(File(path("a/b/c")), File(path("/a")))
-      fail("Expected IllegalArgumentException")
-    } catch (e: java.lang.IllegalArgumentException) {
-      assertEquals("'other' is different type of Path", e.message)
+      fail("Expected IllegalStateException")
+    } catch (e: java.lang.IllegalStateException) {
+      assertEquals("${path("a/b/c")} is not an absolute path", e.message)
     }
 
     try {
       RelativizableFile.fromAbsoluteFile(File(path("/a/b/c")), File(path("a")))
-      fail("Expected IllegalArgumentException")
-    } catch (e: java.lang.IllegalArgumentException) {
-      assertEquals("'other' is different type of Path", e.message)
-    }
-
-    try {
-      RelativizableFile.fromAbsoluteFile(File(path("a/b/c")), File(path("a")))
       fail("Expected IllegalStateException")
     } catch (e: java.lang.IllegalStateException) {
       assertEquals("${path("a")} is not an absolute path", e.message)
     }
+
+    file = RelativizableFile.fromAbsoluteFile(File(path("/a/b/c")), File(path("/x")))
+    assertEquals(path("/a/b/c"), file.absoluteFile.path)
+    assertNull(file.baseDir)
+    assertNull(file.relativeFile)
   }
 
   /**
