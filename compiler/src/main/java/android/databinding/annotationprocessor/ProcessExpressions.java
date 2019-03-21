@@ -364,7 +364,7 @@ public class ProcessExpressions extends ProcessDataBinding.ProcessingStep {
             // info files. (createIntermediateFromLayouts).
             // Build process may also duplicate some files at compile time. This is where
             // we detect those copies and force inherit their module and classname information.
-            final HashMap<String, List<ResourceBundle.LayoutFileBundle>> bundles = bundle
+            final Map<String, List<ResourceBundle.LayoutFileBundle>> bundles = bundle
                     .getLayoutBundles();
             for (Map.Entry<String, String> info : mLayoutInfoMap.entrySet()) {
                 String key = LayoutXmlProcessor.exportLayoutNameFromInfoFileName(info.getKey());

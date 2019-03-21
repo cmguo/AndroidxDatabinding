@@ -25,6 +25,8 @@ import android.databinding.tool.util.Preconditions;
 import android.databinding.tool.util.RelativizableFile;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
@@ -89,6 +91,8 @@ public class ResourceBundle implements Serializable {
             L.e("File bundle must have a name. %s does not have one.", bundle);
             return;
         }
+        // we want to generate only if this belongs to us, otherwise, it is already generated in
+        // the dependency
         if (fromSource) {
             mLayoutFileBundlesInSource.add(bundle);
         }
@@ -115,11 +119,32 @@ public class ResourceBundle implements Serializable {
                     .build()));
     }
 
+    /**
+     * @deprecated Use {@link #getAllLayoutFileBundlesInSource()} which contains
+     * {@link LayoutFileBundle}s for all layouts instead of just data binding. If you only care
+     * about data binding layouts, check {@link LayoutFileBundle#isBindingData()}.
+     */
+    @Deprecated
     public Set<LayoutFileBundle> getLayoutFileBundlesInSource() {
+        return Sets.filter(mLayoutFileBundlesInSource, LayoutFileBundle::isBindingData);
+    }
+
+    public Set<LayoutFileBundle> getAllLayoutFileBundlesInSource() {
         return mLayoutFileBundlesInSource;
     }
 
-    public HashMap<String, List<LayoutFileBundle>> getLayoutBundles() {
+    /**
+     * @deprecated Use {@link #getAllLayoutBundles()} which contains {@link LayoutFileBundle}s for
+     * all layouts instead of just data binding. If you only care about data binding layouts, check
+     * {@link LayoutFileBundle#isBindingData()}.
+     */
+    @Deprecated
+    public Map<String, List<LayoutFileBundle>> getLayoutBundles() {
+        //noinspection ConstantConditions Map values are never null.
+        return Maps.filterEntries(mLayoutBundles, entry -> entry.getValue().get(0).isBindingData());
+    }
+
+    public Map<String, List<LayoutFileBundle>> getAllLayoutBundles() {
         return mLayoutBundles;
     }
 
@@ -557,6 +582,11 @@ public class ResourceBundle implements Serializable {
         @XmlAttribute(name = "isMerge", required = true)
         private boolean mIsMerge;
 
+        // In order to be backwards compatible this property is not required and has a default which
+        // enables data binding. Only new versions will potentially set and persist false values.
+        @XmlAttribute(name = "isBindingData")
+        private boolean mIsBindingData = true;
+
         private LocationScopeProvider mClassNameLocationProvider;
 
         // for XML binding
@@ -576,10 +606,12 @@ public class ResourceBundle implements Serializable {
             mBindingPackage = other.mBindingPackage;
             mHasVariations = other.mHasVariations;
             mIsMerge = other.mIsMerge;
+            mIsBindingData = other.mIsBindingData;
         }
 
         public LayoutFileBundle(@NonNull RelativizableFile file, @NonNull String fileName,
-                @NonNull String directory, @NonNull String modulePackage, boolean isMerge) {
+                @NonNull String directory, @NonNull String modulePackage, boolean isMerge,
+                boolean isBindingData) {
             // We prefer relative path over absolute path as we don't want to break caching across
             // machines---see bug 121288180.
             if (file.getRelativeFile() != null) {
@@ -591,6 +623,7 @@ public class ResourceBundle implements Serializable {
             mDirectory = directory;
             mModulePackage = modulePackage;
             mIsMerge = isMerge;
+            mIsBindingData = isBindingData;
         }
 
         public LocationScopeProvider getClassNameLocationProvider() {
@@ -660,6 +693,10 @@ public class ResourceBundle implements Serializable {
 
         public boolean isMerge() {
             return mIsMerge;
+        }
+
+        public boolean isBindingData() {
+            return mIsBindingData;
         }
 
         public String getBindingClassName() {

@@ -161,5 +161,7 @@ class LayoutInfoInput(val args: Args) {
                     val packageName : String,
                     val incremental: Boolean,
                     val v1ArtifactsFolder : File? = null,
-                    val useAndroidX : Boolean) : Serializable
+                    val useAndroidX : Boolean,
+                    val enableViewBinding: Boolean
+    ) : Serializable
 }

@@ -17,26 +17,28 @@
 package android.databinding.tool
 
 import android.databinding.tool.processing.Scope
+import android.databinding.tool.store.GenClassInfoLog
 import android.databinding.tool.store.LayoutInfoInput
 import android.databinding.tool.store.LayoutInfoLog
 import android.databinding.tool.store.ResourceBundle
+import android.databinding.tool.store.ResourceBundle.LayoutFileBundle
 import android.databinding.tool.writer.BaseLayoutBinderWriter
 import android.databinding.tool.writer.BaseLayoutModel
 import android.databinding.tool.writer.JavaFileWriter
 import android.databinding.tool.writer.generatedClassInfo
 import android.databinding.tool.writer.toJavaFile
 import android.databinding.tool.writer.toViewBinder
+import com.squareup.javapoet.JavaFile
 
 @Suppress("unused")// used by tools
-class BaseDataBinder(
-        val input : LayoutInfoInput) {
+class BaseDataBinder(val input : LayoutInfoInput) {
     private val resourceBundle : ResourceBundle = ResourceBundle(
             input.packageName, input.args.useAndroidX)
     init {
         input.filesToConsider
                 .forEach {
                     it.inputStream().use {
-                        val bundle = ResourceBundle.LayoutFileBundle.fromXML(it)
+                        val bundle = LayoutFileBundle.fromXML(it)
                         resourceBundle.addLayoutBundle(bundle, true)
                     }
                 }
@@ -55,23 +57,32 @@ class BaseDataBinder(
         val useAndroidX = input.args.useAndroidX
         val libTypes = LibTypes(useAndroidX = useAndroidX)
 
-        // generate only if this belongs to us, otherwise, it is already generated in
-        // the dependency
-        resourceBundle.layoutFileBundlesInSource.groupBy { it.mFileName }.forEach {
-            val layoutName = it.key
-            val layoutModel = BaseLayoutModel(it.value)
+        val layoutBindings = resourceBundle.allLayoutFileBundlesInSource
+            .groupBy(LayoutFileBundle::getFileName)
 
-            val binderWriter = BaseLayoutBinderWriter(layoutModel, libTypes)
-            writer.writeToFile(binderWriter.write())
-            myLog.classInfoLog.addMapping(layoutName, binderWriter.generateClassInfo())
+        layoutBindings.forEach { layoutName, variations ->
+            val layoutModel = BaseLayoutModel(variations)
 
-            if (false) {
+            val javaFile: JavaFile
+            val classInfo: GenClassInfoLog.GenClass
+            if (variations.first().isBindingData) {
+                val binderWriter = BaseLayoutBinderWriter(layoutModel, libTypes)
+                javaFile = binderWriter.write()
+                classInfo = binderWriter.generateClassInfo()
+            } else {
+                check(input.args.enableViewBinding) {
+                    "View binding is not enabled but found non-data binding layouts: $variations"
+                }
+
                 val viewBinder = layoutModel.toViewBinder()
-                writer.writeToFile(viewBinder.toJavaFile(useLegacyAnnotations = !useAndroidX))
-                myLog.classInfoLog.addMapping(layoutName, viewBinder.generatedClassInfo())
+                javaFile = viewBinder.toJavaFile(useLegacyAnnotations = !useAndroidX)
+                classInfo = viewBinder.generatedClassInfo()
             }
 
-            it.value.forEach {
+            writer.writeToFile(javaFile)
+            myLog.classInfoLog.addMapping(layoutName, classInfo)
+
+            variations.forEach {
                 it.bindingTargetBundles.forEach { bundle ->
                     if (bundle.isBinder) {
                         myLog.addDependency(layoutName, bundle.includedLayout)

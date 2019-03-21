@@ -117,7 +117,7 @@ object AndroidDataBinding {
                 processXmlOptions.resOutput
         )
         L.setDebugLog(true)
-        processor.processResources(input)
+        processor.processResources(input, false)
         if (processXmlOptions.shouldZipLayoutInfo()) {
             val outZip = File(processXmlOptions.layoutInfoOutput,
                     "layout-info.zip")
@@ -150,7 +150,8 @@ object AndroidDataBinding {
                 packageName = options.packageName,
                 logFolder = Files.createTempDirectory("db-incremental-log").toFile(),
                 incremental = false,
-                useAndroidX = options.useAndroidX
+                useAndroidX = options.useAndroidX,
+                enableViewBinding = false
         )
         val sourceFileWriter = if (options.zipSourceOutput) {
             ZipFileWriter(options.sourceFileOut)

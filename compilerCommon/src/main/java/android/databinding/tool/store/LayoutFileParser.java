@@ -71,7 +71,8 @@ public final class LayoutFileParser {
 
     public static ResourceBundle.LayoutFileBundle parseXml(@NonNull final RelativizableFile input,
             @NonNull final File outputFile, @NonNull final String pkg,
-            @NonNull final LayoutXmlProcessor.OriginalFileLookup originalFileLookup)
+            @NonNull final LayoutXmlProcessor.OriginalFileLookup originalFileLookup,
+            boolean isViewBindingEnabled)
             throws ParserConfigurationException, IOException, SAXException,
             XPathExpressionException {
         File inputFile = input.getAbsoluteFile();
@@ -92,7 +93,7 @@ public final class LayoutFileParser {
             stripFile(inputFile, outputFile, encoding, originalFileLookup);
             return parseOriginalXml(
                 RelativizableFile.fromAbsoluteFile(originalFile, input.getBaseDir()),
-                pkg, encoding);
+                pkg, encoding, isViewBindingEnabled);
         } finally {
             Scope.exit();
         }
@@ -113,7 +114,7 @@ public final class LayoutFileParser {
 
     private static ResourceBundle.LayoutFileBundle parseOriginalXml(
             @NonNull final RelativizableFile originalFile, @NonNull final String pkg,
-            @NonNull final String encoding)
+            @NonNull final String encoding, boolean isViewBindingEnabled)
             throws IOException {
         File original = originalFile.getAbsoluteFile();
         try {
@@ -132,25 +133,38 @@ public final class LayoutFileParser {
             XMLParser parser = new XMLParser(tokenStream);
             XMLParser.DocumentContext expr = parser.document();
             XMLParser.ElementContext root = expr.element();
-            if (!"layout".equals(root.elmName.getText())) {
+            boolean isBindingData = "layout".equals(root.elmName.getText());
+
+            XMLParser.ElementContext data;
+            XMLParser.ElementContext rootView;
+            if (isBindingData) {
+                data = getDataNode(root);
+                rootView = getViewNode(original, root);
+            } else if (isViewBindingEnabled) {
+                data = null;
+                rootView = root;
+            } else {
                 return null;
             }
-            XMLParser.ElementContext data = getDataNode(root);
-            XMLParser.ElementContext rootView = getViewNode(original, root);
 
-            if (hasMergeInclude(rootView)) {
+            // TODO does this restriction also exist for view binding?
+            boolean isMerge = "merge".equals(rootView.elmName.getText());
+            if (isMerge && !filter(rootView, "include").isEmpty()) {
                 L.e(ErrorMessages.INCLUDE_INSIDE_MERGE);
                 return null;
             }
-            boolean isMerge = "merge".equals(rootView.elmName.getText());
 
             ResourceBundle.LayoutFileBundle bundle =
                 new ResourceBundle.LayoutFileBundle(
                     originalFile, xmlNoExtension, original.getParentFile().getName(), pkg,
-                    isMerge);
-            final String newTag = original.getParentFile().getName() + '/' + xmlNoExtension;
-            parseData(original, data, bundle);
-            parseExpressions(newTag, rootView, isMerge, bundle);
+                    isMerge, isBindingData);
+
+            if (isBindingData) {
+                final String newTag = original.getParentFile().getName() + '/' + xmlNoExtension;
+                parseData(original, data, bundle);
+                parseExpressions(newTag, rootView, isMerge, bundle);
+            }
+
             return bundle;
         } finally {
             Scope.exit();
@@ -403,10 +417,6 @@ public final class LayoutFileParser {
             }
         }
         return result;
-    }
-
-    private static boolean hasMergeInclude(XMLParser.ElementContext rootView) {
-        return "merge".equals(rootView.elmName.getText()) && !filter(rootView, "include").isEmpty();
     }
 
     private static void stripFile(File xml, File out, String encoding,

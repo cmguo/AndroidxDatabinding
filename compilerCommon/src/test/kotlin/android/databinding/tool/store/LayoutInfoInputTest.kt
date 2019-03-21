@@ -350,7 +350,8 @@ class LayoutInfoInputTest {
                         logFolder = baseBinderLogFolder,
                         artifactFolder = artifactFolder,
                         packageName = "foo.bar.baz",
-                        useAndroidX = true)
+                        useAndroidX = true,
+                        enableViewBinding = false)
         )
     }
 }
