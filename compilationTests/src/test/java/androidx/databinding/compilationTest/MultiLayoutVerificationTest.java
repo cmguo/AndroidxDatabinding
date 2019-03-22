@@ -66,7 +66,7 @@ public class MultiLayoutVerificationTest extends BaseCompilationTest {
         for (ScopedException exception : exceptions) {
             ScopedErrorReport report = exception.getScopedErrorReport();
             assertNotNull(report);
-            File file = new File(new File(testFolder, "app"), report.getFilePath());
+            File file = new File(report.getFilePath());
             assertTrue(file.exists());
             assertEquals(1, report.getLocations().size());
             Location location = report.getLocations().get(0);
@@ -122,7 +122,7 @@ public class MultiLayoutVerificationTest extends BaseCompilationTest {
         for (ScopedException exception : exceptions) {
             ScopedErrorReport report = exception.getScopedErrorReport();
             assertNotNull(report);
-            File file = new File(new File(testFolder, "app"), report.getFilePath());
+            File file = new File(report.getFilePath());
             assertTrue(file.exists());
             assertEquals(result.error, 1, report.getLocations().size());
             Location location = report.getLocations().get(0);
@@ -175,7 +175,7 @@ public class MultiLayoutVerificationTest extends BaseCompilationTest {
         for (ScopedException exception : exceptions) {
             ScopedErrorReport report = exception.getScopedErrorReport();
             assertNotNull(report);
-            File file = new File(new File(testFolder, "app"), report.getFilePath());
+            File file = new File(report.getFilePath());
             assertTrue(file.exists());
             assertEquals(result.error, 1, report.getLocations().size());
             Location location = report.getLocations().get(0);
@@ -229,7 +229,7 @@ public class MultiLayoutVerificationTest extends BaseCompilationTest {
             if (exception.getBareMessage().startsWith("Cannot find a setter")) {
                 continue;
             }
-            File file = new File(new File(testFolder, "app"), report.getFilePath());
+            File file = new File(report.getFilePath());
             assertTrue(file.getAbsolutePath() + " should exist", file.exists());
             assertEquals(result.error, 1, report.getLocations().size());
             Location location = report.getLocations().get(0);

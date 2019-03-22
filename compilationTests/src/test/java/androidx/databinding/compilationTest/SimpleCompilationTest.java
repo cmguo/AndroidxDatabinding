@@ -119,7 +119,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
             String extract = extract(targetFile, loc);
             assertEquals(expectedExtract, extract);
         }
-        final File errorFile = new File(new File(testFolder, "app"), report.getFilePath());
+        final File errorFile = new File(report.getFilePath());
         assertTrue(errorFile.exists());
         assertEquals(new File(testFolder, targetFile).getCanonicalFile(),
                 errorFile.getCanonicalFile());
@@ -160,7 +160,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         File invalidSetter = new File(testFolder, "/app/src/main/res/layout/invalid_setter.xml");
         for (ScopedException exception : bindingExceptions) {
             ScopedErrorReport report = exception.getScopedErrorReport();
-            final File errorFile = new File(new File(testFolder, "app"), report.getFilePath());
+            final File errorFile = new File(report.getFilePath());
             String message = null;
             String expectedErrorFile = null;
             if (errorFile.getCanonicalPath().equals(broken.getCanonicalPath())) {
@@ -335,7 +335,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         assertEquals(result.error, 1, errors.size());
         final ScopedException ex = errors.get(0);
         final ScopedErrorReport report = ex.getScopedErrorReport();
-        final File errorFile = new File(new File(testFolder, "app"), report.getFilePath());
+        final File errorFile = new File(report.getFilePath());
         assertTrue(errorFile.exists());
         assertEquals(new File(testFolder,
                 "/app/src/main/res/layout/layout_with_two_way_event_attribute.xml")
@@ -361,7 +361,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         assertEquals(result.error, 1, errors.size());
         final ScopedException ex = errors.get(0);
         final ScopedErrorReport report = ex.getScopedErrorReport();
-        final File errorFile = new File(new File(testFolder, "app"), report.getFilePath());
+        final File errorFile = new File(report.getFilePath());
         assertTrue(errorFile.exists());
         assertEquals(new File(testFolder,
                         "/app/src/main/res/layout/layout_with_dependency.xml")
@@ -388,7 +388,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         assertEquals(result.error, 1, errors.size());
         final ScopedException ex = errors.get(0);
         final ScopedErrorReport report = ex.getScopedErrorReport();
-        final File errorFile = new File(new File(testFolder, "app"), report.getFilePath());
+        final File errorFile = new File(report.getFilePath());
         assertTrue(errorFile.exists());
         assertEquals(new File(testFolder,
                         "/app/src/main/res/layout/layout_with_dependency.xml")
@@ -415,7 +415,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         assertEquals(result.error, 1, errors.size());
         final ScopedException ex = errors.get(0);
         final ScopedErrorReport report = ex.getScopedErrorReport();
-        final File errorFile = new File(new File(testFolder, "app"), report.getFilePath());
+        final File errorFile = new File(report.getFilePath());
         assertTrue(errorFile.exists());
         assertEquals(new File(testFolder,
                         "/app/src/main/res/layout/layout_with_dependency.xml")
