@@ -63,10 +63,12 @@ class RelativizableFileTest {
 
   @Test
   fun testFromAbsoluteFileWithBaseDir() {
-    var file = RelativizableFile.fromAbsoluteFile(File(path("/a/b/c")), File(path("/a")))
-    assertEquals(path("/a/b/c"), file.absoluteFile.path)
-    assertEquals(path("/a"), file.baseDir!!.path)
-    assertEquals(path("b/c"), file.relativeFile!!.path)
+    run {
+      val file = RelativizableFile.fromAbsoluteFile(File(path("/a/b/c")), File(path("/a")))
+      assertEquals(path("/a/b/c"), file.absoluteFile.path)
+      assertEquals(path("/a"), file.baseDir!!.path)
+      assertEquals(path("b/c"), file.relativeFile!!.path)
+    }
 
     try {
       RelativizableFile.fromAbsoluteFile(File(path("a/b/c")), File(path("/a")))
@@ -82,10 +84,14 @@ class RelativizableFileTest {
       assertEquals("${path("a")} is not an absolute path", e.message)
     }
 
-    file = RelativizableFile.fromAbsoluteFile(File(path("/a/b/c")), File(path("/x")))
-    assertEquals(path("/a/b/c"), file.absoluteFile.path)
-    assertNull(file.baseDir)
-    assertNull(file.relativeFile)
+    run {
+      // When absoluteFile is located outside of baseDir, baseDir is ignored.
+      val file = RelativizableFile.fromAbsoluteFile(
+          absoluteFile = File(path("/a/b/c")), baseDir = File(path("/x")))
+      assertEquals(path("/a/b/c"), file.absoluteFile.path)
+      assertNull(file.baseDir)
+      assertNull(file.relativeFile)
+    }
   }
 
   /**
