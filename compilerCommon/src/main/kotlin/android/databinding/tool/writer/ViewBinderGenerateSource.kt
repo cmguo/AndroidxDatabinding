@@ -188,6 +188,17 @@ private class JavaFileGenerator(private val binder: ViewBinder, useLegacyAnnotat
         }
         addParameter(rootParam)
 
+        addComment("The body of this method is generated in a way you would not otherwise write.")
+        addComment("This is done to optimize the compiled bytecode for size and performance.")
+
+        val missingId = localNames.newName("missingId")
+        addStatement("$T $missingId", String::class.java)
+
+        // By using a named block and break statements, the generated code compiles to bytecode
+        // which optimizes for the common case of all required views being present. It also allows
+        // de-duplicating the exception handling code to save bytecode size.
+        beginControlFlow("missingId:")
+
         val constructorParams = mutableListOf<CodeBlock>()
         constructorParams += CodeBlock.of(N, rootParam)
 
@@ -200,15 +211,8 @@ private class JavaFileGenerator(private val binder: ViewBinder, useLegacyAnnotat
 
             if (binding.absentConfigurations.isEmpty()) {
                 beginControlFlow("if ($name == null)")
-
-                // String.concat(String) is used here as an optimization for dex size. The prefix
-                // string will only appear once in the dex file because it's shared by all
-                // validation code. The name of the ID probably already exists as a string in the
-                // dex because it should match the field name we generate. Since we're about to
-                // throw an exception we also don't care about additional runtime cost.
-                addStatement("throw new $T($S.concat($S))", NullPointerException::class.java,
-                    "Missing required view with ID: ", binding.name)
-
+                addStatement("$missingId = $S", binding.name)
+                addStatement("break missingId")
                 endControlFlow()
             }
         }
@@ -220,5 +224,11 @@ private class JavaFileGenerator(private val binder: ViewBinder, useLegacyAnnotat
                 *constructorParams.toTypedArray()
             )
         )
+
+        endControlFlow()
+
+        // String.concat(String) is used because it produces less bytecode than '+' (StringBuilder).
+        addStatement("throw new $T($S.concat($missingId))", NullPointerException::class.java,
+            "Missing required view with ID: ")
     }
 }
