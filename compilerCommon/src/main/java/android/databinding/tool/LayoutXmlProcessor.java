@@ -51,7 +51,6 @@ public class LayoutXmlProcessor {
     private final ResourceBundle mResourceBundle;
     private boolean mProcessingComplete;
     private final OriginalFileLookup mOriginalFileLookup;
-    private final LayoutFileParser mLayoutFileParser = new LayoutFileParser();
 
     public LayoutXmlProcessor(
             String applicationPackage,
@@ -154,7 +153,7 @@ public class LayoutXmlProcessor {
     public boolean processSingleFile(@NonNull RelativizableFile input, @NonNull File output)
             throws ParserConfigurationException, SAXException, XPathExpressionException,
             IOException {
-        final ResourceBundle.LayoutFileBundle bindingLayout = mLayoutFileParser
+        final ResourceBundle.LayoutFileBundle bindingLayout = LayoutFileParser
                 .parseXml(input, output, mResourceBundle.getAppPackage(), mOriginalFileLookup);
         if (bindingLayout != null && !bindingLayout.isEmpty()) {
             mResourceBundle.addLayoutBundle(bindingLayout, true);
@@ -169,7 +168,6 @@ public class LayoutXmlProcessor {
         if (mProcessingComplete) {
             return false;
         }
-        final LayoutFileParser layoutFileParser = new LayoutFileParser();
         final URI inputRootUri = input.getRootInputFolder().toURI();
         ProcessFileCallback callback = new ProcessFileCallback() {
             private File convertToOutFile(File file) {
@@ -181,13 +179,8 @@ public class LayoutXmlProcessor {
             public void processLayoutFile(File file)
                     throws ParserConfigurationException, SAXException, XPathExpressionException,
                     IOException {
-                final File output = convertToOutFile(file);
-                final ResourceBundle.LayoutFileBundle bindingLayout =
-                    layoutFileParser.parseXml(RelativizableFile.fromAbsoluteFile(file, null),
-                        output, mResourceBundle.getAppPackage(), mOriginalFileLookup);
-                if (bindingLayout != null && !bindingLayout.isEmpty()) {
-                    mResourceBundle.addLayoutBundle(bindingLayout, true);
-                }
+                processSingleFile(RelativizableFile.fromAbsoluteFile(file, null),
+                        convertToOutFile(file));
             }
 
             @Override
