@@ -44,6 +44,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.zip.ZipEntry;
@@ -64,8 +65,9 @@ import javax.xml.bind.annotation.XmlRootElement;
  * This is a serializable class that can keep the result of parsing layout files.
  */
 public class ResourceBundle implements Serializable {
-    private static final String[] ANDROID_VIEW_PACKAGE_VIEWS = new String[]
-            {"View", "ViewGroup", "ViewStub", "TextureView", "SurfaceView"};
+    private static final List<String> ANDROID_VIEW_PACKAGE_VIEWS =
+            Arrays.asList("View", "ViewGroup", "ViewStub", "TextureView", "SurfaceView");
+
     private String mAppPackage;
 
     private HashMap<String, List<LayoutFileBundle>> mLayoutBundles
@@ -77,15 +79,10 @@ public class ResourceBundle implements Serializable {
 
     private List<File> mRemovedFiles = new ArrayList<File>();
 
-    private boolean mValidated = false;
-
-    private final boolean mUseAndroidX;
-
     private final String viewDataBindingClass;
 
     public ResourceBundle(String appPackage, boolean useAndroidX) {
         mAppPackage = appPackage;
-        mUseAndroidX = useAndroidX;
         viewDataBindingClass = useAndroidX
                 ? "androidx.databinding.ViewDataBinding"
                 : "android.databinding.ViewDataBinding";
@@ -99,11 +96,9 @@ public class ResourceBundle implements Serializable {
         if (fromSource) {
             mLayoutFileBundlesInSource.add(bundle);
         }
-        if (!mLayoutBundles.containsKey(bundle.mFileName)) {
-            mLayoutBundles.put(bundle.mFileName, new ArrayList<>());
-        }
 
-        final List<LayoutFileBundle> bundles = mLayoutBundles.get(bundle.mFileName);
+        List<LayoutFileBundle> bundles = mLayoutBundles
+                .computeIfAbsent(bundle.mFileName, ignored -> new ArrayList<>());
         for (LayoutFileBundle existing : bundles) {
             if (existing.equals(bundle)) {
                 L.d("skipping layout bundle %s because it already exists.", bundle);
@@ -145,20 +140,21 @@ public class ResourceBundle implements Serializable {
         // blaze might pass a zip instead of a folder
         if (folder.isFile()) { //bazel
             // unzip it into a tmp folder and use it.
-            ZipFile zipFile = new ZipFile(folder);
-            zipFile.stream().forEach((Consumer<ZipEntry>) zipEntry -> {
-                if (zipEntry.getName().endsWith(DataBindingBuilder.BINDING_CLASS_LIST_SUFFIX)) {
-                    try {
-                        merged.addAll(GenClassInfoLog.fromInputStream(zipFile.getInputStream
-                                (zipEntry)));
-                    } catch (IOException e) {
-                        L.e(
-                                e,
-                                "failed to read gen class info log from entry %s",
-                                zipEntry.getName());
+            try (ZipFile zipFile = new ZipFile(folder)) {
+                zipFile.stream().forEach(zipEntry -> {
+                    if (zipEntry.getName().endsWith(DataBindingBuilder.BINDING_CLASS_LIST_SUFFIX)) {
+                        try {
+                            merged.addAll(GenClassInfoLog.fromInputStream(zipFile.getInputStream
+                                    (zipEntry)));
+                        } catch (IOException e) {
+                            L.e(
+                                    e,
+                                    "failed to read gen class info log from entry %s",
+                                    zipEntry.getName());
+                        }
                     }
-                }
-            });
+                });
+            }
         } else if (folder.isDirectory()){
             SuffixFileFilter fileFilter = new SuffixFileFilter(
                 DataBindingBuilder.BINDING_CLASS_LIST_SUFFIX,
@@ -351,8 +347,7 @@ public class ResourceBundle implements Serializable {
                                 BindingTargetBundle bindingTargetBundle = bundle
                                         .createBindingTarget(
                                                 viewType.getKey(), null, false, null, null, null);
-                                bindingTargetBundle
-                                        .setIncludedLayout(includes.get(viewType.getKey()));
+                                bindingTargetBundle.setIncludedLayout(include);
                                 bindingTargetBundle.setInterfaceType(viewType.getValue());
                             }
                         } else {
@@ -689,26 +684,14 @@ public class ResourceBundle implements Serializable {
             }
 
             LayoutFileBundle bundle = (LayoutFileBundle) o;
-
-            if (mConfigName != null ? !mConfigName.equals(bundle.mConfigName)
-                    : bundle.mConfigName != null) {
-                return false;
-            }
-            if (mDirectory != null ? !mDirectory.equals(bundle.mDirectory)
-                    : bundle.mDirectory != null) {
-                return false;
-            }
-            return !(mFileName != null ? !mFileName.equals(bundle.mFileName)
-                    : bundle.mFileName != null);
-
+            return Objects.equals(mConfigName, bundle.mConfigName)
+                    && Objects.equals(mDirectory, bundle.mDirectory)
+                    && Objects.equals(mFileName, bundle.mFileName);
         }
 
         @Override
         public int hashCode() {
-            int result = mFileName != null ? mFileName.hashCode() : 0;
-            result = 31 * result + (mConfigName != null ? mConfigName.hashCode() : 0);
-            result = 31 * result + (mDirectory != null ? mDirectory.hashCode() : 0);
-            return result;
+            return Objects.hash(mFileName, mConfigName, mDirectory);
         }
 
         @Override
@@ -826,23 +809,14 @@ public class ResourceBundle implements Serializable {
             }
 
             NameTypeLocation that = (NameTypeLocation) o;
-
-            if (location != null ? !location.equals(that.location) : that.location != null) {
-                return false;
-            }
-            if (!name.equals(that.name)) {
-                return false;
-            }
-            return type.equals(that.type);
-
+            return Objects.equals(location, that.location)
+                    && name.equals(that.name)
+                    && type.equals(that.type);
         }
 
         @Override
         public int hashCode() {
-            int result = type.hashCode();
-            result = 31 * result + name.hashCode();
-            result = 31 * result + (location != null ? location.hashCode() : 0);
-            return result;
+            return Objects.hash(type, name, location);
         }
 
         public static boolean contains(List<? extends NameTypeLocation> list, String name) {
@@ -973,7 +947,7 @@ public class ResourceBundle implements Serializable {
                 if (isBinder()) {
                     mFullClassName = mInterfaceType;
                 } else if (mViewName.indexOf('.') == -1) {
-                    if (Arrays.asList(ANDROID_VIEW_PACKAGE_VIEWS).contains(mViewName)) {
+                    if (ANDROID_VIEW_PACKAGE_VIEWS.contains(mViewName)) {
                         mFullClassName = "android.view." + mViewName;
                     } else if ("WebView".equals(mViewName)) {
                         mFullClassName = "android.webkit." + mViewName;
@@ -1005,7 +979,7 @@ public class ResourceBundle implements Serializable {
 
         @Override
         public List<Location> provideScopeLocation() {
-            return mLocation == null ? null : Arrays.asList(mLocation);
+            return mLocation == null ? null : Collections.singletonList(mLocation);
         }
 
         @XmlAccessorType(XmlAccessType.NONE)
