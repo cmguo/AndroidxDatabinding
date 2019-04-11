@@ -64,5 +64,7 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" scope="TEST" name="compile-testing" level="project" />
+    <orderEntry type="library" scope="TEST" name="truth" level="project" />
   </component>
 </module>

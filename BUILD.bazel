@@ -112,6 +112,8 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/com/squareup/javapoet/1.10.0:jar",
         "//prebuilts/tools/common/m2/repository/com/android/tools/build/jetifier/jetifier-core/1.0.0-beta04:jar",
         "//tools/idea/.idea/libraries:gson",
+        "//tools/idea/.idea/libraries:compile-testing[test]",
+        "//tools/idea/.idea/libraries:truth[test]",
     ],
 )
 
@@ -186,6 +188,9 @@ kotlin_test(
     runtime_deps = ["//tools/base/testutils:tools.testutils"],
     deps = [
         ":tools.compilerCommon",
+        "//tools/base/bazel:langtools",
+        "//tools/base/third_party:com.google.testing.compile_compile-testing",
+        "//tools/base/third_party:com.google.truth_truth",
         "//tools/base/third_party:junit_junit",
     ],
 )
