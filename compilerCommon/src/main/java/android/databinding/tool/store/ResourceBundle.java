@@ -25,8 +25,6 @@ import android.databinding.tool.util.Preconditions;
 import android.databinding.tool.util.RelativizableFile;
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
-import com.google.common.base.MoreObjects;
-import com.google.common.collect.Lists;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOCase;
 import org.apache.commons.io.filefilter.SuffixFileFilter;
@@ -57,8 +55,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 /**
@@ -191,8 +187,16 @@ public class ResourceBundle implements Serializable {
                 bundle.getBindingTargetBundles().forEach(bindingTarget -> {
                     String id = bindingTarget.getId();
                     if (id != null && conflictingIds.contains(id)) {
-                        String error = String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
-                                bindingTarget.getAsSimplifiedXmlTag());
+                        String tag;
+                        if (bindingTarget.mViewName != null) {
+                            tag = bindingTarget.mViewName;
+                        } else if (bindingTarget.mIncludedLayout != null) {
+                            tag = "include";
+                        } else {
+                            tag = bindingTarget.mTag;
+                        }
+
+                        String error = String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID, tag, id);
                         Scope.registerError(error, bundle, bindingTarget);
                     }
                 });
@@ -1008,25 +1012,6 @@ public class ResourceBundle implements Serializable {
 
         public String getInterfaceType() {
             return mInterfaceType;
-        }
-
-        /**
-         * Used for error reporting
-         */
-        public String getAsSimplifiedXmlTag() {
-            String xmlElementType;
-            if (mViewName != null) {
-                xmlElementType = mViewName;
-            } else if (mIncludedLayout != null) {
-                xmlElementType = "include";
-            } else {
-                xmlElementType = "view";
-            }
-            if (mId != null) {
-                return String.format("<%s id=\"%s\">", xmlElementType, mId);
-            } else {
-                return String.format("<%s>", xmlElementType);
-            }
         }
 
         @Override

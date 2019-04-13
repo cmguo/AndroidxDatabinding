@@ -288,9 +288,9 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         List<ScopedException> exceptions = result.getBindingExceptions();
         assertMessages(exceptions,
                 String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
-                        "<TextView id=\"@+id/shared_id\">"),
+                        "TextView", "@+id/shared_id"),
                 String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
-                        "<TextView id=\"@+id/shared_id\">"));
+                        "TextView", "@+id/shared_id"));
     }
 
     @Test
@@ -303,9 +303,9 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         List<ScopedException> exceptions = result.getBindingExceptions();
         assertMessages(exceptions,
                 String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
-                        "<include id=\"@+id/shared_id\">"),
+                        "include", "@+id/shared_id"),
                 String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
-                        "<include id=\"@+id/shared_id\">"));
+                        "include", "@+id/shared_id"));
     }
 
     @Test
@@ -318,9 +318,9 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         List<ScopedException> exceptions = result.getBindingExceptions();
         assertMessages(exceptions,
                 String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
-                        "<TextView id=\"@+id/shared_id\">"),
+                        "TextView", "@+id/shared_id"),
                 String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
-                        "<include id=\"@+id/shared_id\">"));
+                        "include", "@+id/shared_id"));
     }
 
     private void assertMessages(List<ScopedException> exceptions,

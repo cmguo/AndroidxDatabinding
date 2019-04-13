@@ -101,5 +101,5 @@ public class ErrorMessages {
             "The call to 'getValue' is unnecessary for LiveData field '%s' and should be removed";
 
     public static final String DUPLICATE_VIEW_OR_INCLUDE_ID =
-            "%s conflicts with another tag that has the same ID";
+            "<%s id='%s'> conflicts with another tag that has the same ID";
 }
