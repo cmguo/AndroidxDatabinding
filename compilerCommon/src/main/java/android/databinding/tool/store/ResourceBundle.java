@@ -193,7 +193,9 @@ public class ResourceBundle implements Serializable {
                         } else if (bindingTarget.mIncludedLayout != null) {
                             tag = "include";
                         } else {
-                            tag = bindingTarget.mTag;
+                            // Ideally we never hit this fallback case, but just in case, the tag
+                            // probably represents a view of some sort.
+                            tag = "view";
                         }
 
                         String error = String.format(ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID, tag, id);
