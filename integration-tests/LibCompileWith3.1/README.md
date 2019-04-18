@@ -6,3 +6,5 @@ version.
 Currently, it is used to reproduce b/116361870 as in the
 MultiModuleTestApp. If you wish to modify this, don't
 forget to update the aar in MultiModuleTestApp/app/libs. 
+
+./gradlew assemble && cp library/build/outputs/aar/library.aar ../MultiModuleTestApp/app/libs/lib_compiled_with_v1_agp_3_1_4.aar

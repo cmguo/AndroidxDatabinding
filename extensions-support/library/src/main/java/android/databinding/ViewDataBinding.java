@@ -270,10 +270,12 @@ public abstract class ViewDataBinding extends BaseObservable {
     private boolean mInLiveDataRegisterObserver;
 
     /**
+     * Needed for backwards binary compatibility.
+     * b/122936785
      * @hide
      */
-    protected ViewDataBinding(Object bindingComponent, View root, int localFieldCount) {
-        mBindingComponent = checkAndCastToBindingComponent(bindingComponent);
+    protected ViewDataBinding(DataBindingComponent bindingComponent, View root, int localFieldCount) {
+        mBindingComponent = bindingComponent;
         mLocalFieldObservers = new WeakListener[localFieldCount];
         this.mRoot = root;
         if (Looper.myLooper() == null) {
@@ -291,6 +293,13 @@ public abstract class ViewDataBinding extends BaseObservable {
             mFrameCallback = null;
             mUIThreadHandler = new Handler(Looper.myLooper());
         }
+    }
+
+    /**
+     * @hide
+     */
+    protected ViewDataBinding(Object bindingComponent, View root, int localFieldCount) {
+        this(checkAndCastToBindingComponent(bindingComponent), root, localFieldCount);
     }
 
     private static DataBindingComponent checkAndCastToBindingComponent(Object bindingComponent) {
