@@ -107,6 +107,7 @@ buildscript {
     ext.dataBindingConfig = databindingProperties
     def supportLibVersion = "26.1.0"
     ext.libs = [:]
+    ext.libs.android_support_annotations = "com.android.support:support-annotations:$supportLibVersion"
     ext.libs.android_support_core_utils = "com.android.support:support-core-utils:$supportLibVersion"
     ext.libs.android_support_cardview_v7 = "com.android.support:cardview-v7:$supportLibVersion"
     ext.libs.android_support_appcompat_v7 = "com.android.support:appcompat-v7:$supportLibVersion"

@@ -47,7 +47,10 @@ fun ViewBinder.generatedClassInfo() = GenClassInfoLog.GenClass(
     implementations = emptySet() // TODO see if we need this
 )
 
-private class JavaFileGenerator(private val binder: ViewBinder, useLegacyAnnotations: Boolean) {
+private class JavaFileGenerator(
+    private val binder: ViewBinder,
+    private val useLegacyAnnotations: Boolean
+) {
     private val annotationPackage =
         if (useLegacyAnnotations) "android.support.annotation" else "androidx.annotation"
     private val nonNull = ClassName.get(annotationPackage, "NonNull")
@@ -67,6 +70,9 @@ private class JavaFileGenerator(private val binder: ViewBinder, useLegacyAnnotat
 
     private fun typeSpec() = classSpec(binder.generatedTypeName) {
         addModifiers(PUBLIC, FINAL)
+
+        val viewBindingPackage = if (useLegacyAnnotations) "android" else "androidx"
+        addSuperinterface(ClassName.get("$viewBindingPackage.viewbinding", "ViewBinding"))
 
         // TODO determine if we can elide the separate root field if the root tag has an ID.
         addField(rootViewField())
@@ -121,11 +127,14 @@ private class JavaFileGenerator(private val binder: ViewBinder, useLegacyAnnotat
         }
     }
 
-    private fun rootViewGetter() = methodSpec("getRootView") {
+    private fun rootViewGetter() = methodSpec("getRoot") {
         // TODO addJavadoc about this being the parent if the root tag was <merge> ...right?
 
+        addAnnotation(Override::class.java)
         addAnnotation(nonNull)
         addModifiers(PUBLIC)
+
+        // TODO covariant return based on XML information
         returns(ANDROID_VIEW)
         addStatement("return $rootFieldName")
     }

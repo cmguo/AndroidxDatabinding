@@ -19,6 +19,7 @@
  */
 include ':library'
 include ':baseAdapters'
+include ':viewbinding'
 if (hasProperty("includeDoclava")) {
     File externalRoot = new File(rootDir, '../../../external')
     include ':doclava'
