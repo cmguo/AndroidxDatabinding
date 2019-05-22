@@ -46,12 +46,19 @@ data class ViewBinding(
     val idReference: ResourceReference,
     /** Layout folders that this view is present in. */
     val presentConfigurations: List<String>,
-    /** Layout folders that this view is absent from. A non-empty list indicates this view binding is optional! */
+    /**
+     * Layout folders that this view is absent from. A non-empty list indicates this view binding
+     * is optional!
+     *
+     * @see isRequired
+     */
     val absentConfigurations: List<String>
 ) {
     init {
         require(idReference.type == "id") { "ID reference type must be 'id': $idReference" }
     }
+
+    val isRequired get() = absentConfigurations.isEmpty()
 }
 
 data class ResourceReference(val rClassName: ClassName, val type: String, val name: String) {
@@ -60,8 +67,8 @@ data class ResourceReference(val rClassName: ClassName, val type: String, val na
 
 fun BaseLayoutModel.toViewBinder(): ViewBinder {
     fun BindingTargetBundle.toBinding(): ViewBinding {
-        // TODO would modulePackage ever really be null? when?
-        val idReference = id.parseXmlResourceReference().toResourceReference(modulePackage!!)
+        val modulePackage = modulePackage ?: this@toViewBinder.modulePackage
+        val idReference = id.parseXmlResourceReference().toResourceReference(modulePackage)
         val (present, absent) = layoutConfigurationMembership(this)
 
         return ViewBinding(

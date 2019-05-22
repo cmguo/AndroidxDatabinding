@@ -37,7 +37,7 @@ import javax.lang.model.element.Modifier.PRIVATE
 import javax.lang.model.element.Modifier.PUBLIC
 import javax.lang.model.element.Modifier.STATIC
 
-fun ViewBinder.toJavaFile(useLegacyAnnotations: Boolean) =
+fun ViewBinder.toJavaFile(useLegacyAnnotations: Boolean = false) =
     JavaFileGenerator(this, useLegacyAnnotations).create()
 
 fun ViewBinder.generatedClassInfo() = GenClassInfoLog.GenClass(
@@ -96,7 +96,9 @@ private class JavaFileGenerator(
 
             // TODO addJavadoc when types were normalized to View due to different declarations.
 
-            if (binding.absentConfigurations.isNotEmpty()) {
+            if (binding.isRequired) {
+                addAnnotation(nonNull)
+            } else {
                 addJavadoc(
                     renderConfigurationJavadoc(
                         binding.presentConfigurations,
@@ -104,8 +106,6 @@ private class JavaFileGenerator(
                     )
                 )
                 addAnnotation(nullable)
-            } else {
-                addAnnotation(nonNull)
             }
         }
     }
@@ -121,7 +121,7 @@ private class JavaFileGenerator(
         binder.bindings.forEach { binding ->
             val name = fieldNames.get(binding)
             addParameter(parameterSpec(binding.type, name) {
-                addAnnotation(if (binding.absentConfigurations.isEmpty()) nonNull else nullable)
+                addAnnotation(if (binding.isRequired) nonNull else nullable)
             })
             addStatement("this.$1N = $1N", name)
         }
@@ -200,13 +200,20 @@ private class JavaFileGenerator(
         addComment("The body of this method is generated in a way you would not otherwise write.")
         addComment("This is done to optimize the compiled bytecode for size and performance.")
 
-        val missingId = localNames.newName("missingId")
-        addStatement("$T $missingId", String::class.java)
+        /** Non-null when error-handling is being generated. */
+        val missingId: String?
 
-        // By using a named block and break statements, the generated code compiles to bytecode
-        // which optimizes for the common case of all required views being present. It also allows
-        // de-duplicating the exception handling code to save bytecode size.
-        beginControlFlow("missingId:")
+        if (binder.bindings.any { it.isRequired }) {
+            missingId = localNames.newName("missingId")
+            addStatement("$T $missingId", String::class.java)
+
+            // By using a named block and break statements, the generated code compiles to bytecode
+            // which optimizes for the common case of all required views being present. It also allows
+            // de-duplicating the exception handling code to save bytecode size.
+            beginControlFlow("missingId:")
+        } else {
+            missingId = null
+        }
 
         val constructorParams = mutableListOf<CodeBlock>()
         constructorParams += CodeBlock.of(N, rootParam)
@@ -218,7 +225,7 @@ private class JavaFileGenerator(
             addStatement("$T $name = $N.findViewById($L)",
                 binding.type, rootParam, binding.idReference.asCode())
 
-            if (binding.absentConfigurations.isEmpty()) {
+            if (binding.isRequired) {
                 beginControlFlow("if ($name == null)")
                 addStatement("$missingId = $S", binding.name)
                 addStatement("break missingId")
@@ -234,10 +241,15 @@ private class JavaFileGenerator(
             )
         )
 
-        endControlFlow()
+        if (missingId != null) {
+            endControlFlow()
 
-        // String.concat(String) is used because it produces less bytecode than '+' (StringBuilder).
-        addStatement("throw new $T($S.concat($missingId))", NullPointerException::class.java,
-            "Missing required view with ID: ")
+            // String.concat(String) produces less bytecode than '+' (StringBuilder).
+            addStatement(
+                "throw new $T($S.concat($missingId))",
+                NullPointerException::class.java,
+                "Missing required view with ID: "
+            )
+        }
     }
 }

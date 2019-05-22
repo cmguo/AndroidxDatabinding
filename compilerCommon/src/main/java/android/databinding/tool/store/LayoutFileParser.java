@@ -159,11 +159,9 @@ public final class LayoutFileParser {
                     originalFile, xmlNoExtension, original.getParentFile().getName(), pkg,
                     isMerge, isBindingData);
 
-            if (isBindingData) {
-                final String newTag = original.getParentFile().getName() + '/' + xmlNoExtension;
-                parseData(original, data, bundle);
-                parseExpressions(newTag, rootView, isMerge, bundle);
-            }
+            final String newTag = original.getParentFile().getName() + '/' + xmlNoExtension;
+            parseData(original, data, bundle);
+            parseExpressions(newTag, rootView, isMerge, bundle);
 
             return bundle;
         } finally {
