@@ -258,11 +258,9 @@ public class LayoutXmlProcessor {
     }
 
     public void writeLayoutInfoFiles(File xmlOutDir, JavaFileWriter writer) throws JAXBException {
-        for (List<ResourceBundle.LayoutFileBundle> layouts : mResourceBundle.getLayoutBundles()
-                .values()) {
-            for (ResourceBundle.LayoutFileBundle layout : layouts) {
-                writeXmlFile(writer, xmlOutDir, layout);
-            }
+        for (ResourceBundle.LayoutFileBundle layout : mResourceBundle
+                .getAllLayoutFileBundlesInSource()) {
+            writeXmlFile(writer, xmlOutDir, layout);
         }
         for (File file : mResourceBundle.getRemovedFiles()) {
             String exportFileName = generateExportFileName(file);

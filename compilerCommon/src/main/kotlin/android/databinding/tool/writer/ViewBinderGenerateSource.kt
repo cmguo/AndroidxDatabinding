@@ -197,13 +197,13 @@ private class JavaFileGenerator(
         }
         addParameter(rootParam)
 
-        addComment("The body of this method is generated in a way you would not otherwise write.")
-        addComment("This is done to optimize the compiled bytecode for size and performance.")
-
         /** Non-null when error-handling is being generated. */
         val missingId: String?
 
         if (binder.bindings.any { it.isRequired }) {
+            addComment("The body of this method is generated in a way you would not otherwise write.")
+            addComment("This is done to optimize the compiled bytecode for size and performance.")
+
             missingId = localNames.newName("missingId")
             addStatement("$T $missingId", String::class.java)
 
@@ -226,6 +226,8 @@ private class JavaFileGenerator(
                 binding.type, rootParam, binding.idReference.asCode())
 
             if (binding.isRequired) {
+                check(missingId != null)
+
                 beginControlFlow("if ($name == null)")
                 addStatement("$missingId = $S", binding.name)
                 addStatement("break missingId")
