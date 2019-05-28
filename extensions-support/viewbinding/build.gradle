@@ -57,7 +57,7 @@ android.libraryVariants.all { variant ->
 uploadArchives {
     repositories {
         mavenDeployer {
-            pom.artifactId = 'viewbinding-support'
+            pom.artifactId = 'viewbinding'
             pom.project {
                 licenses {
                     license {
@@ -73,9 +73,9 @@ uploadArchives {
 
 task prebuildAar(type : Copy) {
     dependsOn uploadArchives
-    from "$buildDir/outputs/aar/viewbinding-support-release.aar"
+    from "$buildDir/outputs/aar/viewbinding-release.aar"
     into dataBindingConfig.prebuildFolder
     rename { String fileName ->
-        "viewbinding-support.aar"
+        "viewbinding.aar"
     }
 }

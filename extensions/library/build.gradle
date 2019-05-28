@@ -69,6 +69,7 @@ configurations {
 dependencies {
     implementation rootProject.ext.libs.android_support_collection
     implementation "androidx.databinding:databinding-common:${dataBindingConfig.version}"
+    api project(':viewbinding')
     compileOnly rootProject.ext.libs.android_arch_lifecycle_extensions
     api rootProject.ext.libs.android_arch_lifecycle_runtime
 }

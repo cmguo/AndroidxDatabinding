@@ -46,6 +46,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnAttachStateChangeListener;
 import android.view.ViewGroup;
+import androidx.viewbinding.ViewBinding;
 
 import androidx.databinding.library.R;
 
@@ -61,7 +62,7 @@ import java.util.Map;
  * binding is unknown, {@link DataBindingUtil#bind(View)} or
  * {@link DataBindingUtil#inflate(LayoutInflater, int, ViewGroup, boolean)} should be used.
  */
-public abstract class ViewDataBinding extends BaseObservable {
+public abstract class ViewDataBinding extends BaseObservable implements ViewBinding {
 
     /**
      * Instead of directly accessing Build.VERSION.SDK_INT, generated code uses this value so that
@@ -533,6 +534,7 @@ public abstract class ViewDataBinding extends BaseObservable {
      * @return the outermost View in the layout file associated with the Binding.
      */
     @NonNull
+    @Override
     public View getRoot() {
         return mRoot;
     }
