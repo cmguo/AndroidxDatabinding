@@ -13,6 +13,7 @@
 
 package android.databinding.tool;
 
+import android.databinding.annotationprocessor.BindableBag;
 import android.databinding.tool.processing.Scope;
 import android.databinding.tool.processing.ScopedException;
 import android.databinding.tool.reflection.InjectedClass;
@@ -186,7 +187,7 @@ public class CompilerChef {
     public void writeDataBinderMapper(
             ProcessingEnvironment processingEnv,
             CompilerArguments compilerArgs,
-            Map<String, Integer> brValueLookup,
+            BindableBag.BRMapping brValueLookup,
             List<String> modulePackages) {
         if (compilerArgs.isEnableV2()) {
             // figure out which mappers exists as they may not exist for v1 libs.
@@ -265,7 +266,7 @@ public class CompilerChef {
 
     private void writeMapperForV1Compat(
             CompilerArguments compilerArgs,
-            Map<String, Integer> brValueLookup) {
+            BindableBag.BRMapping brValueLookup) {
         LibTypes libTypes = ModelAnalyzer.getInstance().libTypes;
         BindingMapperWriter dbr = new BindingMapperWriter(
                 BindingMapperWriter.v1CompatMapperPkg(useAndroidX()),
@@ -326,7 +327,7 @@ public class CompilerChef {
      */
     private void writeMapperForModule(
             CompilerArguments compilerArgs,
-            Map<String, Integer> brValueLookup,
+            BindableBag.BRMapping brValueLookup,
             Set<String> availableDependencyModules) {
         GenClassInfoLog infoLog;
         try {

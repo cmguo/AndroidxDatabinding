@@ -13,6 +13,7 @@
 
 package android.databinding.tool.writer
 
+import android.databinding.annotationprocessor.BindableBag
 import android.databinding.tool.CompilerArguments
 import android.databinding.tool.LayoutBinder
 import android.databinding.tool.LibTypes
@@ -33,7 +34,7 @@ class BindingMapperWriter(
             className = "Test${className}"
         }
     }
-    fun write(brValueLookup: MutableMap<String, Int>) = kcode("") {
+    fun write(brValueLookup: BindableBag.BRMapping) = kcode("") {
         nl("package $pkg;")
         nl("import ${compilerArgs.modulePackage}.BR;")
         nl("import android.util.SparseArray;")
@@ -156,8 +157,8 @@ class BindingMapperWriter(
                 nl("static final SparseArray<String> sKeys = new SparseArray<>();")
                 block("static") {
                     tab("sKeys.put(0, \"_all\");")
-                    brValueLookup.forEach {
-                        tab("sKeys.put(${it.value}, \"${it.key}\");")
+                    brValueLookup.props.forEach {
+                        tab("sKeys.put(${it.second}, \"${it.first}\");")
                     }
                 }
             }

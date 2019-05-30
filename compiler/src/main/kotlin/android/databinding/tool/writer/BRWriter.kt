@@ -29,14 +29,14 @@ import com.squareup.javapoet.TypeSpec
 import javax.lang.model.element.Modifier
 
 class BRWriter(private val useFinal : Boolean) {
-    fun write(values : BindableBag.BRWithValues): String {
+    fun write(values : BindableBag.ModuleBR): String {
         val spec = TypeSpec.classBuilder("BR").apply {
             addModifiers(Modifier.PUBLIC)
             if (ModelAnalyzer.getInstance().hasGeneratedAnnotation) {
                 addAnnotation(AnnotationSpec.builder(ClassName.get("javax.annotation", "Generated"))
                         .addMember("value", S,"Android Data Binding").build())
             }
-            values.props.forEach {
+            values.br.props.forEach {
                 addField(
                         FieldSpec.builder(TypeName.INT, it.first, Modifier.PUBLIC,
                                 Modifier.STATIC).apply {

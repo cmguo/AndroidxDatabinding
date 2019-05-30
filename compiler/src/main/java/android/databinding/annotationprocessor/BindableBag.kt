@@ -43,13 +43,13 @@ class BindableBag(
         moduleProperties: Set<String>,
         private val env: ProcessingEnvironment) {
     // The BR fields we will generate.
-    val toBeGenerated: List<BRWithValues>
+    val toBeGenerated: List<ModuleBR>
     // The list of package names that are generated. We usually generate for all dependencies
     // as well as the current module but it may change in Features depending on where the dependency
     // is coming from.
     var writtenPackages: List<String>
     // A lookup file to map Field names into integer values.
-    val variableIdLookup: Map<String, Int>
+    val variableIdLookup: BRMapping
 
     // Information about the Feature module. Currently we only use the package offset id assigned
     // by gradle. That id allows us to avoid id conflicts between different features.
@@ -87,20 +87,22 @@ class BindableBag(
                 }
             }
         }
-        // now assign ids
-        brFiles.forEach {
-            it.properties.values.forEach {
-                if (it.value == null) {
-                    idBag.findId(it.name)
-                }
+        // now assign ids to the remaining ones.
+        // we sort them to keep ids as stable as possible between runs
+        val brsWithoutValues = brFiles.flatMap { packageProps ->
+            packageProps.properties.values.filter {
+                it.value == null
+            }.map {
+                it.name
             }
         }
+        idBag.assignIds(brsWithoutValues)
 
         writtenPackages = brPackagesToGenerate.toList()
-        val pairs = idBag.getLookup().map { Pair(it.key, it.value) }
+        val brMapping = idBag.buildMapping()
         // now assign id to all stuff we'll generate
         toBeGenerated = brPackagesToGenerate.map { brPkg ->
-            BRWithValues(brPkg, pairs)
+            ModuleBR(brPkg, brMapping)
             // WHEN we have BR per module, the code below should be executed instead
 //            val packageProps = brFiles.firstOrNull {
 //                it.pkg == brPkg
@@ -113,10 +115,10 @@ class BindableBag(
 //                val pairs = packageProps.properties.values.map {
 //                    Pair(it.name, it.value ?: idBag.findId(it.name))
 //                } + Pair("_all", 0)
-//                BRWithValues(brPkg, pairs)
+//                ModuleBR(brPkg, pairs)
 //            }
         }
-        variableIdLookup = idBag.getLookup()
+        variableIdLookup = brMapping
     }
 
     /**
@@ -206,9 +208,18 @@ class BindableBag(
     data class Property(val name: String, val value: Int?)
 
     /**
-     * Represents the metadata for a BR class with its ids already assigned.
+     * Represents the metadata for a specific module BR class with its ids already assigned.
      */
-    data class BRWithValues(val pkg: String, val props: List<Pair<String, Int>>)
+    data class ModuleBR(val pkg: String, val br: BRMapping)
+
+    /**
+     * Keeps the final mapping for a BR class.
+     * Props are ordered by key so that re-runs of the same code generates the same output.
+     */
+    data class BRMapping(val props: List<Pair<String, Int>>) {
+        val size
+            get() = props.size
+    }
 
     /**
      * helper class to generate ids and ensure that same key receives the same id.
@@ -227,7 +238,13 @@ class BindableBag(
             idMapping[key] = value
         }
 
-        fun findId(key: String): Int {
+        fun assignIds(keys : List<String>) {
+            keys.sorted().forEach {
+                findId(it)
+            }
+        }
+
+        private fun findId(key: String): Int {
             return idMapping.getOrPut(key) {
                 var i = newIdOffset
                 while (usedIds.contains(i)) {
@@ -238,6 +255,12 @@ class BindableBag(
             }
         }
 
-        fun getLookup() = idMapping
+        fun buildMapping() = BRMapping(
+                idMapping.map {
+                    Pair(it.key, it.value)
+                }.sortedBy {
+                    it.first
+                }
+        )
     }
 }

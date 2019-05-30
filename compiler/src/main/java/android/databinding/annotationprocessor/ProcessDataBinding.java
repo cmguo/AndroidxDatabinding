@@ -39,7 +39,6 @@ import javax.lang.model.element.TypeElement;
 import javax.xml.bind.JAXBException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -141,7 +140,7 @@ public class ProcessDataBinding extends AbstractProcessor {
         Callback dataBinderWriterCallback = new Callback() {
             CompilerChef mChef;
             List<String> mModulePackages;
-            Map<String, Integer> mBRVariableLookup;
+            BindableBag.BRMapping mBRVariableLookup;
             boolean mWrittenMapper = false;
 
             @Override
@@ -169,9 +168,9 @@ public class ProcessDataBinding extends AbstractProcessor {
             }
 
             @Override
-            public void onBrWriterReady(Map<String, Integer> brLookup, List<String> brPackages) {
+            public void onBrWriterReady(BindableBag.BRMapping brWithValues, List<String> brPackages) {
                 Preconditions.checkNull(mBRVariableLookup, "Cannot set br writer twice");
-                mBRVariableLookup = brLookup;
+                mBRVariableLookup = brWithValues;
                 mModulePackages = brPackages;
                 considerWritingMapper();
             }
@@ -268,6 +267,6 @@ public class ProcessDataBinding extends AbstractProcessor {
 
     interface Callback {
         void onChefReady(CompilerChef chef, GenClassInfoLog classInfoLog);
-        void onBrWriterReady(Map<String, Integer> brWriter, List<String> brPackages);
+        void onBrWriterReady(BindableBag.BRMapping brWithValues, List<String> brPackages);
     }
 }

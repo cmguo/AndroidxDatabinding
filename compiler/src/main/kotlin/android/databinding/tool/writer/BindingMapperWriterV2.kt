@@ -16,6 +16,7 @@
 
 package android.databinding.tool.writer
 
+import android.databinding.annotationprocessor.BindableBag
 import android.databinding.tool.CompilerArguments
 import android.databinding.tool.LibTypes
 import android.databinding.tool.ext.L
@@ -157,7 +158,7 @@ class BindingMapperWriterV2(genClassInfoLog: GenClassInfoLog,
                                 val genClass: GenClassInfoLog.GenClass)
 
 
-    fun write(brValueLookup: MutableMap<String, Int>): TypeSpec
+    fun write(brValueLookup: BindableBag.BRMapping): TypeSpec
             = TypeSpec.classBuilder(className).apply {
         superclass(dataBinderMapper)
         addModifiers(Modifier.PUBLIC)
@@ -211,7 +212,7 @@ class BindingMapperWriterV2(genClassInfoLog: GenClassInfoLog,
         }
     }
 
-    private fun generateInnerBrLookup(brValueLookup: MutableMap<String, Int>) = TypeSpec
+    private fun generateInnerBrLookup(brValueLookup: BindableBag.BRMapping) = TypeSpec
             .classBuilder("InnerBrLookup").apply {
                 /**
                  * generated code looks like:
@@ -227,15 +228,15 @@ class BindingMapperWriterV2(genClassInfoLog: GenClassInfoLog,
                 )
                 val keysField = FieldSpec.builder(keysTypeName, "sKeys").apply {
                     addModifiers(Modifier.STATIC, Modifier.FINAL)
-                    initializer("new $T($L)", keysTypeName, brValueLookup.size + 1)
+                    initializer("new $T($L)", keysTypeName, brValueLookup.size)
                 }.build()
                 addField(keysField)
                 addStaticBlock(CodeBlock.builder().apply {
-                    brValueLookup.forEach {
+                    brValueLookup.props.forEach {
                         addStatement("$N.put($L, $S)",
                                 keysField,
-                                it.value,
-                                it.key)
+                                it.second,
+                                it.first)
                     }
                 }.build())
             }.build()
