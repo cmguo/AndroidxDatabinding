@@ -15,7 +15,7 @@ rootProject.buildscript {
     }
 }
 
-rootProject.subprojects {
+rootProject.allprojects {
     repositories {
         maven { url "file://${rootProject.ext.checkoutDir}/out/repo/" }
         maven { url "file://${rootProject.ext.checkoutDir}/prebuilts/tools/common/m2/repository/" }

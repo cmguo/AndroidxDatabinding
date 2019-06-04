@@ -1,0 +1,46 @@
+buildscript {
+    def runningInIde = project.hasProperty('android.injected.invoked.from.ide')
+    rootProject.ext.runningInIde = runningInIde
+    if (runningInIde) {
+        apply from: "../ideCommonBuildScript.gradle"
+    } else {
+        apply from: "../commonHeader.gradle"
+        apply from: "../commonBuildScript.gradle"
+    }
+}
+if (!rootProject.ext.runningInIde) {
+    apply from: "../commonHeader.gradle"
+    subprojects {
+        project.apply from: "../../commonHeader.gradle"
+        project.apply from: "../../commonLocalRepo.gradle"
+    }
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion rootProject.latestCompileSdk
+
+    defaultConfig {
+        applicationId 'com.example.viewbinding'
+        minSdkVersion 14
+        targetSdkVersion rootProject.latestCompileSdk
+        versionCode 1
+        versionName '1.0'
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    viewBinding {
+        enabled = true
+    }
+}
+
+dependencies {
+    androidTestImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+}

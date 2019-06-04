@@ -197,6 +197,14 @@ private class JavaFileGenerator(
         }
         addParameter(rootParam)
 
+        if (binder.bindings.isEmpty()) {
+            // Without any bindings, an erroneously-null rootView can be propagated into the binding
+            // instance and its non-null getRoot() method. Synthesize a null check to prevent this.
+            beginControlFlow("if ($N == null)", rootParam)
+            addStatement("throw new $T($S)", NullPointerException::class.java, rootParam.name)
+            endControlFlow()
+        }
+
         /** Non-null when error-handling is being generated. */
         val missingId: String?
 

@@ -81,6 +81,7 @@ class ViewBinderGenerateSourceTest {
                 |import androidx.annotation.Nullable;
                 |import androidx.viewbinding.ViewBinding;
                 |import com.example.R;
+                |import java.lang.NullPointerException;
                 |import java.lang.Override;
                 |
                 |public final class ExampleBinding implements ViewBinding {
@@ -114,6 +115,9 @@ class ViewBinderGenerateSourceTest {
                 |
                 |  @NonNull
                 |  public static ExampleBinding bind(@NonNull View rootView) {
+                |    if (rootView == null) {
+                |      throw new NullPointerException("rootView");
+                |    }
                 |    return new ExampleBinding(rootView);
                 |  }
                 |}
