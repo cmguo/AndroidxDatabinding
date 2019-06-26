@@ -59,6 +59,11 @@ fun fieldSpec(
     body: FieldSpec.Builder.() -> Unit = {}
 ): FieldSpec = FieldSpec.builder(type, name).apply(body).build()
 
+/**
+ * Parse [this] as if it were a qualified class name. Qualified class names must have lowercase
+ * package name components which are separated by a period ('.'). Classes must start with an
+ * uppercase letter. Nested class names are separated by a dollar sign ('$').
+ */
 fun String.toClassName() : ClassName {
-    return ClassName.bestGuess(this)
+    return ClassName.bestGuess(replace('$', '.'))
 }
