@@ -86,7 +86,7 @@ public class ResourceBundle implements Serializable {
                 : "android.databinding.ViewDataBinding";
     }
 
-    public void addLayoutBundle(LayoutFileBundle bundle, boolean fromSource) {
+    public void addLayoutBundle(@NonNull LayoutFileBundle bundle, boolean fromSource) {
         if (bundle.mFileName == null) {
             L.e("File bundle must have a name. %s does not have one.", bundle);
             return;

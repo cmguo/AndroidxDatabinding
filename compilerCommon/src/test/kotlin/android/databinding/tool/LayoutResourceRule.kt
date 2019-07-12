@@ -67,7 +67,9 @@ class LayoutResourceRule(
                 { null },
                 true
             )
-            resourceBundle.addLayoutBundle(bundle, true)
+            if (bundle != null) {
+                resourceBundle.addLayoutBundle(bundle, true)
+            }
         }
         resourceBundle.validateAndRegisterErrors()
 

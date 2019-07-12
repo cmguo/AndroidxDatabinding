@@ -18,6 +18,7 @@ package android.databinding.tool.writer
 
 import android.databinding.tool.LayoutResourceRule
 import android.databinding.tool.assert
+import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
 
@@ -291,6 +292,99 @@ class ViewBinderGenerateSourceTest {
                 |  }
                 |}
             """.trimMargin())
+        }
+    }
+
+    @Test fun ignoreLayoutTruthyValues() {
+        layouts.write("example1", "layout", """
+            <LinearLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:tools="http://schemas.android.com/tools"
+                    tools:viewBindingIgnore="true"
+                    />
+            """.trimIndent())
+        layouts.write("example2", "layout", """
+            <LinearLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:tools="http://schemas.android.com/tools"
+                    tools:viewBindingIgnore="TRUE"
+                    />
+            """.trimIndent())
+        layouts.write("example3", "layout", """
+            <LinearLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:tools="http://schemas.android.com/tools"
+                    tools:viewBindingIgnore="tRuE"
+                    />
+            """.trimIndent())
+
+        assertThat(layouts.parse()).apply {
+            doesNotContainKey("example1")
+            doesNotContainKey("example2")
+            doesNotContainKey("example3")
+        }
+    }
+
+    @Test fun ignoreLayoutFalseyValues() {
+        layouts.write("example1", "layout", """
+            <LinearLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:tools="http://schemas.android.com/tools"
+                    tools:viewBindingIgnore="false"
+                    />
+            """.trimIndent())
+        layouts.write("example2", "layout", """
+            <LinearLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:tools="http://schemas.android.com/tools"
+                    tools:viewBindingIgnore="yes"
+                    />
+            """.trimIndent())
+        layouts.write("example3", "layout", """
+            <LinearLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:tools="http://schemas.android.com/tools"
+                    tools:viewBindingIgnore="   true        "
+                    />
+            """.trimIndent())
+        layouts.write("example4", "layout", """
+            <LinearLayout
+                    xmlns:android="http://schemas.android.com/apk/res/android"
+                    xmlns:tools="http://schemas.android.com/tools"
+                    tools:viewBindingIgnore=""
+                    />
+            """.trimIndent())
+
+        assertThat(layouts.parse()).apply {
+            containsKey("example1")
+            containsKey("example2")
+            containsKey("example3")
+            containsKey("example4")
+        }
+    }
+
+    @Test fun ignoreLayoutSingleConfiguration() {
+        layouts.write("example", "layout", """
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+                <TextView android:id="@+id/name" />
+            </LinearLayout>
+            """.trimIndent())
+
+        layouts.write("example", "layout-land", """
+            <LinearLayout
+                    xmlns:tools="http://schemas.android.com/tools"
+                    tools:viewBindingIgnore="true"
+                    />
+            """.trimIndent())
+
+        val model = layouts.parse().getValue("example")
+
+        // This would create a @Nullable field if the second layout was parsed.
+        model.toViewBinder().toJavaFile().assert {
+            contains("""
+                |  @NonNull
+                |  public final TextView name;
+                """.trimMargin())
         }
     }
 }

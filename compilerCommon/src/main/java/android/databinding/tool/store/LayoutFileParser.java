@@ -28,6 +28,7 @@ import android.databinding.tool.util.StringUtils;
 import android.databinding.tool.util.XmlEditor;
 
 import com.android.annotations.NonNull;
+import com.android.annotations.Nullable;
 import com.google.common.base.Strings;
 
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -69,6 +70,7 @@ public final class LayoutFileParser {
 
     private static final String LAYOUT_PREFIX = "@layout/";
 
+    @Nullable
     public static ResourceBundle.LayoutFileBundle parseXml(@NonNull final RelativizableFile input,
             @NonNull final File outputFile, @NonNull final String pkg,
             @NonNull final LayoutXmlProcessor.OriginalFileLookup originalFileLookup,
@@ -141,6 +143,10 @@ public final class LayoutFileParser {
                 data = getDataNode(root);
                 rootView = getViewNode(original, root);
             } else if (isViewBindingEnabled) {
+                if ("true".equalsIgnoreCase(attributeMap(root).get("tools:viewBindingIgnore"))) {
+                    L.d("Ignoring %s for view binding", originalFile);
+                    return null;
+                }
                 data = null;
                 rootView = root;
             } else {
