@@ -80,8 +80,14 @@ private class JavaFileGenerator(
 
         addMethod(constructor())
         addMethod(rootViewGetter())
-        addMethod(oneParamInflate())
-        addMethod(threeParamInflate())
+
+        if (binder.hasRootMergeTag) {
+            addMethod(mergeInflate())
+        } else {
+            addMethod(oneParamInflate())
+            addMethod(threeParamInflate())
+        }
+
         addMethod(bind())
     }
 
@@ -179,6 +185,32 @@ private class JavaFileGenerator(
         addStatement("$N.addView(root)", parentParam)
         endControlFlow()
         addStatement("return bind(root)")
+    }
+
+    private fun mergeInflate() = methodSpec("inflate") {
+        // TODO addJavadoc
+
+        addModifiers(PUBLIC, STATIC)
+        addAnnotation(nonNull)
+        returns(binder.generatedTypeName)
+
+        val inflaterParam = parameterSpec(ANDROID_LAYOUT_INFLATER, "inflater") {
+            addAnnotation(nonNull)
+        }
+        val parentParam = parameterSpec(ANDROID_VIEW_GROUP, "parent") {
+            addAnnotation(nonNull)
+        }
+
+        addParameter(inflaterParam)
+        addParameter(parentParam)
+
+        beginControlFlow("if ($N == null)", parentParam)
+        addStatement("throw new $T($S)", NullPointerException::class.java, parentParam.name)
+        endControlFlow()
+
+        addStatement("$N.inflate($L, $N)",
+            inflaterParam, binder.layoutReference.asCode(), parentParam)
+        addStatement("return bind($N)", parentParam)
     }
 
     private fun bind() = methodSpec("bind") {

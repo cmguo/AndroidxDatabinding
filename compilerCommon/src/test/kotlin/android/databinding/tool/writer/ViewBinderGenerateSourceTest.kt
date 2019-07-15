@@ -19,6 +19,7 @@ package android.databinding.tool.writer
 import android.databinding.tool.LayoutResourceRule
 import android.databinding.tool.assert
 import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 
@@ -385,6 +386,82 @@ class ViewBinderGenerateSourceTest {
                 |  @NonNull
                 |  public final TextView name;
                 """.trimMargin())
+        }
+    }
+
+    @Test fun mergeRemovesSingleArgumentInflateAndAttachParam() {
+        layouts.write("example", "layout", "<merge/>")
+
+        val model = layouts.parse().getValue("example")
+        model.toViewBinder().toJavaFile().assert {
+            parsesAs("""
+                |package com.example.databinding;
+                |
+                |import android.view.LayoutInflater;
+                |import android.view.View;
+                |import android.view.ViewGroup;
+                |import androidx.annotation.NonNull;
+                |import androidx.viewbinding.ViewBinding;
+                |import com.example.R;
+                |import java.lang.NullPointerException;
+                |import java.lang.Override;
+                |
+                |public final class ExampleBinding implements ViewBinding {
+                |  @NonNull
+                |  private final View rootView;
+                |
+                |  private ExampleBinding(@NonNull View rootView) {
+                |    this.rootView = rootView;
+                |  }
+                |
+                |  @Override
+                |  @NonNull
+                |  public View getRoot() {
+                |    return rootView;
+                |  }
+                |
+                |  @NonNull
+                |  public static ExampleBinding inflate(@NonNull LayoutInflater inflater,
+                |      @NonNull ViewGroup parent) {
+                |    if (parent == null) {
+                |      throw new NullPointerException("parent");
+                |    }
+                |    inflater.inflate(R.layout.example, parent);
+                |    return bind(parent);
+                |  }
+                |
+                |  @NonNull
+                |  public static ExampleBinding bind(@NonNull View rootView) {
+                |    if (rootView == null) {
+                |      throw new NullPointerException("rootView");
+                |    }
+                |    return new ExampleBinding(rootView);
+                |  }
+                |}
+            """.trimMargin())
+        }
+    }
+
+    @Test fun configurationsMustAgreeOnRootMergeTag() {
+        layouts.write("example", "layout", "<merge/>")
+        layouts.write("example", "layout-land", "<FrameLayout/>")
+        layouts.write("example", "layout-sw600dp", "<FrameLayout/>")
+
+        val model = layouts.parse().getValue("example")
+        try {
+            model.toViewBinder()
+            fail()
+        } catch (e: IllegalStateException) {
+            assertThat(e).hasMessageThat().isEqualTo("""
+                Configurations for example.xml must agree on the use of a root <merge> tag.
+
+                Present:
+                 - layout
+
+                Absent:
+                 - layout-sw600dp
+                 - layout-land
+                """.trimIndent())
         }
     }
 }

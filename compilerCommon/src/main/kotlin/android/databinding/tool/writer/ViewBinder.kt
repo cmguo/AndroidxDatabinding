@@ -30,7 +30,8 @@ import com.squareup.javapoet.TypeName
 data class ViewBinder(
     val generatedTypeName: ClassName,
     val layoutReference: ResourceReference,
-    val bindings: List<ViewBinding>
+    val bindings: List<ViewBinding>,
+    val hasRootMergeTag: Boolean
 ) {
     init {
         require(layoutReference.type == "layout") {
@@ -80,10 +81,24 @@ fun BaseLayoutModel.toViewBinder(): ViewBinder {
         )
     }
 
+    val hasRootMergeTag = variations.any { it.isMerge }
+    check(hasRootMergeTag == variations.all { it.isMerge }) {
+        val (present, absent) = variations.partition { it.isMerge }
+        """|Configurations for $baseFileName.xml must agree on the use of a root <merge> tag.
+           |
+           |Present:
+           |${present.joinToString("\n|") { " - ${it.directory}" }}
+           |
+           |Absent:
+           |${absent.joinToString("\n|") { " - ${it.directory}" }}
+           """.trimMargin()
+    }
+
     return ViewBinder(
         generatedTypeName = ClassName.get(bindingClassPackage, bindingClassName),
         layoutReference = ResourceReference(ClassName.get(modulePackage, "R"), "layout", baseFileName),
-        bindings = sortedTargets.filter { it.id != null }.map { it.toBinding() }
+        bindings = sortedTargets.filter { it.id != null }.map { it.toBinding() },
+        hasRootMergeTag = hasRootMergeTag
     )
 }
 
