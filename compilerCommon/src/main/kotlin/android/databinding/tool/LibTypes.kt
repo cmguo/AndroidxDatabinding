@@ -17,6 +17,7 @@
 package android.databinding.tool
 
 import com.android.tools.build.jetifier.core.TypeRewriter
+import com.android.tools.build.jetifier.core.config.Config
 import com.android.tools.build.jetifier.core.config.ConfigParser
 import com.android.tools.build.jetifier.core.type.JavaType
 
@@ -28,12 +29,14 @@ class LibTypes(val useAndroidX: Boolean) {
     }
 
     private val typeRewriter by lazy(LazyThreadSafetyMode.NONE) {
-        // Since subprojects with data binding can be built in parallel and loading the Jetifier
-        // config below is not thread-safe, we need to use a lock (see bug 123984697 for more info).
-        val config = synchronized(lockForConfigParser) {
-             ConfigParser.loadDefaultConfig()
-                ?: throw IllegalStateException("Cannot load AndroidX conversion file.")
-        }
+        // The ConfigParser.loadDefaultConfig() method in Jetifier currently has a thread safety
+        // bug (see bug 137929327), so we need to implement a workaround here. Once we update data
+        // binding to use a newer version of Jetifier that has the fix, we can simply call
+        // ConfigParser.loadDefaultConfig() below.
+        val config =
+            javaClass.getResource(Config.DEFAULT_CONFIG_RES_PATH).openStream().reader().use {
+                ConfigParser.parseFromString(it.readText())
+            } ?: throw IllegalStateException("Cannot load AndroidX conversion file.")
         TypeRewriter(config = config, useFallback = true)
     }
 
@@ -191,10 +194,6 @@ class LibTypes(val useAndroidX: Boolean) {
     }
 
     companion object {
-        // Lock for loading the Jetifier config. (We assume that there is a 1-1 mapping between
-        // between this LibTypes class and the Jetifier ConfigParser class.)
-        private val lockForConfigParser = Object()
-
         // needed until we can update jettifier w/ arch and data binding
         private val PREFIX_REPLACEMENTS = mapOf(
                 "android.databinding." to "androidx.databinding.",
