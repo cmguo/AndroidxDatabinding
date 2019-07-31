@@ -47,10 +47,10 @@ android {
 dependencies {
     api fileTree(dir: 'libs', include: ['*.aar'])
     implementation "androidx.cardview:cardview:1.0.0"
-    androidTestCompile ('androidx.test:runner:1.1.0-alpha4') {
+    androidTestCompile ('androidx.test:runner:1.1.0') {
         exclude module: 'support-annotations'
     }
-    androidTestCompile ('androidx.test.espresso:espresso-core:3.1.0-alpha4') {
+    androidTestCompile ('androidx.test.espresso:espresso-core:3.1.0') {
         exclude module: 'support-annotations'
     }
 }
