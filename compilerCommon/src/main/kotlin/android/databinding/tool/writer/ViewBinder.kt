@@ -22,6 +22,7 @@ import android.databinding.tool.ext.XmlResourceReference
 import android.databinding.tool.ext.parseXmlResourceReference
 import android.databinding.tool.ext.toClassName
 import android.databinding.tool.store.ResourceBundle.BindingTargetBundle
+import android.databinding.tool.writer.ViewBinder.RootNode
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.TypeName
@@ -31,12 +32,21 @@ data class ViewBinder(
     val generatedTypeName: ClassName,
     val layoutReference: ResourceReference,
     val bindings: List<ViewBinding>,
-    val hasRootMergeTag: Boolean
+    val rootNode: RootNode
 ) {
     init {
         require(layoutReference.type == "layout") {
             "Layout reference type must be 'layout': $layoutReference"
         }
+    }
+
+    sealed class RootNode {
+        abstract val type: ClassName
+
+        object Merge : RootNode() {
+            override val type get() = ANDROID_VIEW
+        }
+        data class View(override val type: ClassName): RootNode()
     }
 }
 
@@ -81,24 +91,37 @@ fun BaseLayoutModel.toViewBinder(): ViewBinder {
         )
     }
 
-    val hasRootMergeTag = variations.any { it.isMerge }
-    check(hasRootMergeTag == variations.all { it.isMerge }) {
-        val (present, absent) = variations.partition { it.isMerge }
-        """|Configurations for $baseFileName.xml must agree on the use of a root <merge> tag.
-           |
-           |Present:
-           |${present.joinToString("\n|") { " - ${it.directory}" }}
-           |
-           |Absent:
-           |${absent.joinToString("\n|") { " - ${it.directory}" }}
-           """.trimMargin()
+    val rootNode = if (variations.any { it.isMerge }) {
+        // If anyone is a <merge>, everyone must be a <merge>.
+        check(variations.all { it.isMerge }) {
+            val (present, absent) = variations.partition { it.isMerge }
+            """|Configurations for $baseFileName.xml must agree on the use of a root <merge> tag.
+               |
+               |Present:
+               |${present.joinToString("\n|") { " - ${it.directory}" }}
+               |
+               |Absent:
+               |${absent.joinToString("\n|") { " - ${it.directory}" }}
+               """.trimMargin()
+        }
+        RootNode.Merge
+    } else {
+        val rootViewType = variations
+            // Create a set of root node view types for all variations.
+            .mapTo(LinkedHashSet()) { it.rootNodeViewType.toClassName() }
+            // If all of the variations agree on the type, use it.
+            .singleOrNull()
+            // Otherwise fall back to View.
+            ?: ANDROID_VIEW
+
+        RootNode.View(rootViewType)
     }
 
     return ViewBinder(
         generatedTypeName = ClassName.get(bindingClassPackage, bindingClassName),
         layoutReference = ResourceReference(ClassName.get(modulePackage, "R"), "layout", baseFileName),
         bindings = sortedTargets.filter { it.id != null }.map { it.toBinding() },
-        hasRootMergeTag = hasRootMergeTag
+        rootNode = rootNode
     )
 }
 

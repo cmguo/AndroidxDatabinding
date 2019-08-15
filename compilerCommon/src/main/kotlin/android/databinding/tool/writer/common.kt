@@ -19,9 +19,9 @@ package android.databinding.tool.writer
 import android.databinding.tool.store.ResourceBundle.BindingTargetBundle
 import com.squareup.javapoet.ClassName
 
-internal val ANDROID_VIEW = ClassName.get("android.view", "View")
-internal val ANDROID_LAYOUT_INFLATER = ClassName.get("android.view", "LayoutInflater")
-internal val ANDROID_VIEW_GROUP = ClassName.get("android.view", "ViewGroup")
+internal val ANDROID_VIEW: ClassName = ClassName.get("android.view", "View")
+internal val ANDROID_LAYOUT_INFLATER: ClassName = ClassName.get("android.view", "LayoutInflater")
+internal val ANDROID_VIEW_GROUP: ClassName = ClassName.get("android.view", "ViewGroup")
 
 internal val BindingTargetBundle.fieldType: String get() = interfaceType ?: fullClassName
 

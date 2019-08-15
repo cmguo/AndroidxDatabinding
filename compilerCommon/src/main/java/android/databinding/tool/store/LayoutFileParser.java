@@ -163,7 +163,7 @@ public final class LayoutFileParser {
             ResourceBundle.LayoutFileBundle bundle =
                 new ResourceBundle.LayoutFileBundle(
                     originalFile, xmlNoExtension, original.getParentFile().getName(), pkg,
-                    isMerge, isBindingData);
+                    isMerge, isBindingData, getViewName(rootView));
 
             final String newTag = original.getParentFile().getName() + '/' + xmlNoExtension;
             parseData(original, data, bundle);

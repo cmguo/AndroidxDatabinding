@@ -28,6 +28,7 @@ import android.databinding.tool.ext.javaFile
 import android.databinding.tool.ext.methodSpec
 import android.databinding.tool.ext.parameterSpec
 import android.databinding.tool.store.GenClassInfoLog
+import android.databinding.tool.writer.ViewBinder.RootNode
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.NameAllocator
@@ -81,7 +82,7 @@ private class JavaFileGenerator(
         addMethod(constructor())
         addMethod(rootViewGetter())
 
-        if (binder.hasRootMergeTag) {
+        if (binder.rootNode is RootNode.Merge) {
             addMethod(mergeInflate())
         } else {
             addMethod(oneParamInflate())
@@ -91,7 +92,7 @@ private class JavaFileGenerator(
         addMethod(bind())
     }
 
-    private fun rootViewField() = fieldSpec(rootFieldName, ANDROID_VIEW) {
+    private fun rootViewField() = fieldSpec(rootFieldName, binder.rootNode.type) {
         addModifiers(PRIVATE, FINAL)
         addAnnotation(nonNull)
     }
@@ -119,7 +120,7 @@ private class JavaFileGenerator(
     private fun constructor() = constructorSpec {
         addModifiers(PRIVATE)
 
-        addParameter(parameterSpec(ANDROID_VIEW, rootFieldName) {
+        addParameter(parameterSpec(binder.rootNode.type, rootFieldName) {
             addAnnotation(nonNull)
         })
         addStatement("this.$rootFieldName = $rootFieldName")
@@ -140,8 +141,7 @@ private class JavaFileGenerator(
         addAnnotation(nonNull)
         addModifiers(PUBLIC)
 
-        // TODO covariant return based on XML information
-        returns(ANDROID_VIEW)
+        returns(binder.rootNode.type)
         addStatement("return $rootFieldName")
     }
 
@@ -256,7 +256,11 @@ private class JavaFileGenerator(
         }
 
         val constructorParams = mutableListOf<CodeBlock>()
-        constructorParams += CodeBlock.of(N, rootParam)
+        constructorParams += if (binder.rootNode.type != ANDROID_VIEW) {
+            CodeBlock.of("($T) $N", binder.rootNode.type, rootParam)
+        } else {
+            CodeBlock.of(N, rootParam)
+        }
 
         binder.bindings.forEach { binding ->
             val name = localNames.newName(binding.name, binding)

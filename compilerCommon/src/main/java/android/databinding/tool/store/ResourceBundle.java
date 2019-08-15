@@ -48,7 +48,6 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.io.StringWriter;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,8 +62,26 @@ import java.util.zip.ZipFile;
  * This is a serializable class that can keep the result of parsing layout files.
  */
 public class ResourceBundle implements Serializable {
-    private static final List<String> ANDROID_VIEW_PACKAGE_VIEWS =
-            Arrays.asList("View", "ViewGroup", "ViewStub", "TextureView", "SurfaceView");
+    /**
+     * Produce a fully-qualified type name for an XML layout node using the same rules as the
+     * platform's {@code LayoutInflater}.
+     */
+    private static String qualifyViewNodeName(String viewNodeName) {
+        switch (viewNodeName) {
+            case "View":
+            case "ViewGroup":
+            case "ViewStub":
+            case "TextureView":
+            case "SurfaceView":
+                return "android.view." + viewNodeName;
+            case "WebView":
+                return "android.webkit.WebView";
+            default:
+                return viewNodeName.indexOf('.') == -1
+                        ? "android.widget." + viewNodeName
+                        : viewNodeName;
+        }
+    }
 
     private String mAppPackage;
 
@@ -587,6 +604,12 @@ public class ResourceBundle implements Serializable {
         @XmlAttribute(name = "isBindingData")
         private boolean mIsBindingData = true;
 
+        // In order to be backwards compatible this property is not required and has a default
+        // which is historically accurate. Only new versions will set and persist real values.
+        @NonNull
+        @XmlAttribute(name = "rootNodeType")
+        private String mRootNodeViewType = "android.view.View";
+
         private LocationScopeProvider mClassNameLocationProvider;
 
         // for XML binding
@@ -607,11 +630,12 @@ public class ResourceBundle implements Serializable {
             mHasVariations = other.mHasVariations;
             mIsMerge = other.mIsMerge;
             mIsBindingData = other.mIsBindingData;
+            mRootNodeViewType = other.mRootNodeViewType;
         }
 
         public LayoutFileBundle(@NonNull RelativizableFile file, @NonNull String fileName,
                 @NonNull String directory, @NonNull String modulePackage, boolean isMerge,
-                boolean isBindingData) {
+                boolean isBindingData, @NonNull String rootViewType) {
             // We prefer relative path over absolute path as we don't want to break caching across
             // machines---see bug 121288180.
             if (file.getRelativeFile() != null) {
@@ -624,6 +648,7 @@ public class ResourceBundle implements Serializable {
             mModulePackage = modulePackage;
             mIsMerge = isMerge;
             mIsBindingData = isBindingData;
+            mRootNodeViewType = qualifyViewNodeName(rootViewType);
         }
 
         public LocationScopeProvider getClassNameLocationProvider() {
@@ -697,6 +722,11 @@ public class ResourceBundle implements Serializable {
 
         public boolean isBindingData() {
             return mIsBindingData;
+        }
+
+        @NonNull
+        public String getRootNodeViewType() {
+            return mRootNodeViewType;
         }
 
         public String getBindingClassName() {
@@ -1022,16 +1052,8 @@ public class ResourceBundle implements Serializable {
             if (mFullClassName == null) {
                 if (isBinder()) {
                     mFullClassName = mInterfaceType;
-                } else if (mViewName.indexOf('.') == -1) {
-                    if (ANDROID_VIEW_PACKAGE_VIEWS.contains(mViewName)) {
-                        mFullClassName = "android.view." + mViewName;
-                    } else if ("WebView".equals(mViewName)) {
-                        mFullClassName = "android.webkit." + mViewName;
-                    } else {
-                        mFullClassName = "android.widget." + mViewName;
-                    }
                 } else {
-                    mFullClassName = mViewName;
+                    mFullClassName = qualifyViewNodeName(mViewName);
                 }
             }
             if (mFullClassName == null) {

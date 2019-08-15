@@ -67,9 +67,7 @@ class ViewBinderGenerateSourceTest {
     }
 
     @Test fun zeroBindingsDoesNotGenerateErrorHandling() {
-        layouts.write("example", "layout", """
-            <LinearLayout />
-            """.trimIndent())
+        layouts.write("example", "layout", "<View />")
 
         val model = layouts.parse().getValue("example")
         model.toViewBinder().toJavaFile().assert {
@@ -153,6 +151,7 @@ class ViewBinderGenerateSourceTest {
                 |import android.view.LayoutInflater;
                 |import android.view.View;
                 |import android.view.ViewGroup;
+                |import android.widget.LinearLayout;
                 |import android.widget.TextView;
                 |import androidx.annotation.NonNull;
                 |import androidx.annotation.Nullable;
@@ -162,7 +161,7 @@ class ViewBinderGenerateSourceTest {
                 |
                 |public final class ExampleBinding implements ViewBinding {
                 |  @NonNull
-                |  private final View rootView;
+                |  private final LinearLayout rootView;
                 |
                 |  @Nullable
                 |  public final TextView email;
@@ -170,7 +169,7 @@ class ViewBinderGenerateSourceTest {
                 |  @Nullable
                 |  public final TextView name;
                 |
-                |  private ExampleBinding(@NonNull View rootView, @Nullable TextView email,
+                |  private ExampleBinding(@NonNull LinearLayout rootView, @Nullable TextView email,
                 |      @Nullable TextView name) {
                 |    this.rootView = rootView;
                 |    this.email = email;
@@ -179,7 +178,7 @@ class ViewBinderGenerateSourceTest {
                 |
                 |  @Override
                 |  @NonNull
-                |  public View getRoot() {
+                |  public LinearLayout getRoot() {
                 |    return rootView;
                 |  }
                 |
@@ -202,7 +201,7 @@ class ViewBinderGenerateSourceTest {
                 |  public static ExampleBinding bind(@NonNull View rootView) {
                 |    TextView email = rootView.findViewById(R.id.email);
                 |    TextView name = rootView.findViewById(R.id.name);
-                |    return new ExampleBinding(rootView, email, name);
+                |    return new ExampleBinding((LinearLayout) rootView, email, name);
                 |  }
                 |}
             """.trimMargin())
@@ -225,6 +224,7 @@ class ViewBinderGenerateSourceTest {
                 |import android.view.LayoutInflater;
                 |import android.view.View;
                 |import android.view.ViewGroup;
+                |import android.widget.LinearLayout;
                 |import android.widget.TextView;
                 |import androidx.annotation.NonNull;
                 |import androidx.annotation.Nullable;
@@ -236,7 +236,7 @@ class ViewBinderGenerateSourceTest {
                 |
                 |public final class ExampleBinding implements ViewBinding {
                 |  @NonNull
-                |  private final View rootView_;
+                |  private final LinearLayout rootView_;
                 |
                 |  @NonNull
                 |  public final TextView missingId;
@@ -244,7 +244,7 @@ class ViewBinderGenerateSourceTest {
                 |  @NonNull
                 |  public final TextView rootView;
                 |
-                |  private ExampleBinding(@NonNull View rootView_, @NonNull TextView missingId,
+                |  private ExampleBinding(@NonNull LinearLayout rootView_, @NonNull TextView missingId,
                 |      @NonNull TextView rootView) {
                 |    this.rootView_ = rootView_;
                 |    this.missingId = missingId;
@@ -253,7 +253,7 @@ class ViewBinderGenerateSourceTest {
                 |
                 |  @Override
                 |  @NonNull
-                |  public View getRoot() {
+                |  public LinearLayout getRoot() {
                 |    return rootView_;
                 |  }
                 |
@@ -286,7 +286,7 @@ class ViewBinderGenerateSourceTest {
                 |        missingId = "rootView";
                 |        break missingId;
                 |      }
-                |      return new ExampleBinding(rootView, missingId_, rootView_);
+                |      return new ExampleBinding((LinearLayout) rootView, missingId_, rootView_);
                 |    }
                 |    throw new NullPointerException(
                 |        "Missing required view with ID: ".concat(missingId));
@@ -461,7 +461,64 @@ class ViewBinderGenerateSourceTest {
                 Absent:
                  - layout-sw600dp
                  - layout-land
-                """.trimIndent())
+                """.trimIndent()
+            )
+        }
+    }
+
+    @Test fun matchingRootViewsGetCovariantRootReturnType() {
+        layouts.write("example", "layout", "<LinearLayout/>")
+        layouts.write("example", "layout-land", "<LinearLayout/>")
+
+        val model = layouts.parse().getValue("example")
+
+        model.toViewBinder().toJavaFile().assert {
+            contains("""
+                |  public LinearLayout getRoot() {
+                """.trimMargin())
+        }
+    }
+
+    @Test fun matchingRootViewsWithDifferentDeclarationsGetCovariantRootReturnType() {
+        layouts.write("example", "layout", "<LinearLayout/>")
+        layouts.write("example", "layout-land", "<android.widget.LinearLayout/>")
+        layouts.write("example", "layout-sw600dp", """<view class="android.widget.LinearLayout"/>""")
+
+        val model = layouts.parse().getValue("example")
+
+        model.toViewBinder().toJavaFile().assert {
+            contains("""
+                |  public LinearLayout getRoot() {
+                """.trimMargin())
+        }
+    }
+
+    @Test fun conflictingRootViewsDoNotGetCovariantRootReturnType() {
+        layouts.write("example", "layout", "<LinearLayout/>")
+        layouts.write("example", "layout-land", "<FrameLayout/>")
+
+        val model = layouts.parse().getValue("example")
+
+        model.toViewBinder().toJavaFile().assert {
+            contains("""
+                |  public View getRoot() {
+                """.trimMargin())
+        }
+    }
+
+    @Test fun mergeRootViewsDoNotGetCovariantRootReturnType() {
+        layouts.write("example", "layout", """
+            <merge xmlns:android="http://schemas.android.com/apk/res/android">
+                <TextView android:id="@+id/name" />
+            </merge>
+            """.trimIndent())
+
+        val model = layouts.parse().getValue("example")
+
+        model.toViewBinder().toJavaFile().assert {
+            contains("""
+                |  public View getRoot() {
+                """.trimMargin())
         }
     }
 }
