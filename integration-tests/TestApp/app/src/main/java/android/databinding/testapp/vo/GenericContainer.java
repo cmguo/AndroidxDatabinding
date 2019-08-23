@@ -16,9 +16,13 @@
 
 package android.databinding.testapp.vo;
 
+import androidx.lifecycle.MutableLiveData;
+
 public class GenericContainer<T> {
     public T val;
     private T mVal2;
+    public int nonGenericVal;
+    public MutableLiveData<Integer> typedLiveData;
     public GenericContainer(T val) {
         this.val = val;
         this.mVal2 = val;

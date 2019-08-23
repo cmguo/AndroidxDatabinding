@@ -24,11 +24,11 @@ import androidx.lifecycle.MutableLiveData
 
 // a sample generic interface accessed from layout
 interface Generic<T> {
-    fun getValue() : T
+    fun getValue(): T
 }
 
 // implementation of it
-class GenericImpl(val data : String) : Generic<String> {
+class GenericImpl(val data: String) : Generic<String> {
     override fun getValue() = data
 
 }
@@ -39,17 +39,21 @@ class GenericModel {
     val liveData = MutableLiveData<List<Generic<*>>>()
 }
 
+// a generic class with non-generic field. see: b/139738910
+class GenericModelWithNonGenericField<T> {
+    val specifiedGenericField = MutableLiveData<Int>()
+}
 
 // binding adapter to test results
 @BindingAdapter("genericList")
-fun TextView.genericList(items : List<Generic<*>>?) {
+fun TextView.genericList(items: List<Generic<*>>?) {
     text = items?.joinToString(",") {
         it.getValue().toString()
     }
 }
 
 @BindingAdapter("genericList2")
-fun TextView.genericList2(items : List<Generic<*>>?) {
+fun TextView.genericList2(items: List<Generic<*>>?) {
     text = items?.joinToString("-") {
         it.getValue().toString()
     }

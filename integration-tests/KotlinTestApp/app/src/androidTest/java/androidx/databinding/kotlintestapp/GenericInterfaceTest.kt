@@ -15,9 +15,12 @@
  */
 package androidx.databinding.kotlintestapp
 
+import android.view.View
 import androidx.databinding.kotlintestapp.databinding.GenericInterfaceBinding
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.assertion.ViewAssertions.matches
+import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.espresso.matcher.ViewMatchers.withEffectiveVisibility
 import androidx.test.espresso.matcher.ViewMatchers.withId
 import androidx.test.espresso.matcher.ViewMatchers.withText
 import androidx.test.runner.AndroidJUnit4
@@ -39,11 +42,16 @@ class GenericInterfaceTest {
                 observable.set(listOf(GenericImpl("a"), GenericImpl("b")))
                 liveData.value = listOf(GenericImpl("c"), GenericImpl("d"))
             }
+            rule.binding.unspecifiedGenericModel = GenericModelWithNonGenericField<Any>().also {
+                it.specifiedGenericField.value = View.INVISIBLE
+            }
             rule.executePendingBindings()
         }
         onView(withId(R.id.textObservable))
             .check(matches(withText("a,b")))
         onView(withId(R.id.textLiveData))
             .check(matches(withText("c-d")))
+        onView(withId(R.id.unspecifiedGenericBinding))
+            .check(matches(withEffectiveVisibility(ViewMatchers.Visibility.INVISIBLE)))
     }
 }

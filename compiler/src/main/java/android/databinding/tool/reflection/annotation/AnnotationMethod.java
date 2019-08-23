@@ -21,8 +21,6 @@ import android.databinding.tool.reflection.ModelMethod;
 import android.databinding.tool.reflection.SdkUtil;
 import android.databinding.tool.reflection.TypeUtil;
 
-import java.util.List;
-
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
@@ -34,6 +32,7 @@ import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
+import java.util.List;
 
 class AnnotationMethod extends ModelMethod {
     final ExecutableType mMethod;

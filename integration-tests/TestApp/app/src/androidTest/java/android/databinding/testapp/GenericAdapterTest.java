@@ -20,6 +20,7 @@ import android.databinding.testapp.vo.BasicObject;
 import android.databinding.testapp.vo.GenericContainer;
 import android.support.test.annotation.UiThreadTest;
 import android.support.test.runner.AndroidJUnit4;
+import android.view.View;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,7 +46,9 @@ public class GenericAdapterTest extends BaseDataBinderTest<GenericAdapterBinding
         List<String> list = asList(arr);
         BasicObject obj = new BasicObject();
         GenericContainer<BasicObject> container = new GenericContainer<>(obj);
+        container.nonGenericVal = View.INVISIBLE;
         obj.setField1("Yes, it worked");
+        getBinder().setUnspecifiedGeneric(container);
         getBinder().setList(list);
         getBinder().setArr(arr);
         getBinder().setContainer(container);
@@ -59,5 +62,8 @@ public class GenericAdapterTest extends BaseDataBinderTest<GenericAdapterBinding
         assertEquals("Hello World", getBinder().textView7.getText().toString());
         assertEquals("Yes, it worked", getBinder().textView8.getText().toString());
         assertEquals("Yes, it worked", getBinder().textView9.getText().toString());
+        assertEquals(View.INVISIBLE, getBinder().textView10.getVisibility());
+        assertEquals(View.INVISIBLE, getBinder().textView11.getVisibility());
+        assertEquals(View.INVISIBLE, getBinder().textView12.getVisibility());
     }
 }

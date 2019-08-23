@@ -29,6 +29,9 @@
         <variable
             name="listWithType"
             type="java.util.List&lt;Integer>" />
+        <variable
+            name="unspecifiedGenericModel"
+            type="androidx.databinding.kotlintestapp.GenericModelWithNonGenericField" />
      </data>
 
     <LinearLayout
@@ -63,5 +66,11 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:text="@{listWithType.empty ? `empty` : `full`}" />
+
+        <TextView
+            android:id="@+id/unspecifiedGenericBinding"
+            android:visibility="@{unspecifiedGenericModel.specifiedGenericField}"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
      </LinearLayout>
 </layout>

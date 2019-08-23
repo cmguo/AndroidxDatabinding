@@ -68,6 +68,10 @@ Some of data binding tests are only in AGP. To run them:
 
 `./gradlew :base:build-system:integration-test:databinding:te`
 
+You can run data binding unit tests via:
+`bazel test //tools/data-binding/...`
+
+
 ### Running Integration Tests
 These are run by gradle build.
 

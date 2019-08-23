@@ -54,6 +54,10 @@ class AnnotationClass(
         computeComponentType() as ModelClass?
     }
 
+    override fun toDeclarationCode(): String {
+        return AnnotationTypeUtil.getInstance().toJava(typeMirror)
+    }
+
     private fun computeComponentType(): AnnotationClass? {
         val component: TypeMirror?
         when {

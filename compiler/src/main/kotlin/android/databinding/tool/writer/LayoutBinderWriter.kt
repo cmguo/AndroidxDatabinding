@@ -734,7 +734,8 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
     fun variableSettersAndGetters() = kcode("") {
         variables.forEach {
             if (it.userDefinedType != null) {
-                block("public void ${it.setterName}(${if (it.resolvedType.isPrimitive) "" else "@Nullable "}${it.resolvedType.toJavaCode()} ${it.readableName})") {
+                val argType = it.resolvedType.toJavaCode()
+                block("public void ${it.setterName}(${if (it.resolvedType.isPrimitive) "" else "@Nullable "}$argType ${it.readableName})") {
                     val used = it.isIsUsedInCallback || it.isUsed
                     if (used && it.isObservable) {
                         nl("${it.updateRegistrationCall}(${it.id}, ${it.readableName});");
@@ -759,7 +760,7 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
                     if (!it.resolvedType.isPrimitive) {
                         nl("@Nullable")
                     }
-                    block("public ${it.resolvedType.toJavaCode()} ${it.getterName}()") {
+                    block("public $argType ${it.getterName}()") {
                         nl("return ${it.fieldName};")
                     }
                 }
@@ -967,7 +968,7 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
                 }
             }
             model.pendingExpressions.filter { it.needsLocalField }.forEach {
-                nl("${it.resolvedType.typeName} ${it.executePendingLocalName} = ${if (it.isVariable()) it.fieldName else it.defaultValue};")
+                nl("${it.resolvedType.toDeclarationCode()} ${it.executePendingLocalName} = ${if (it.isVariable()) it.fieldName else it.defaultValue};")
             }
             L.d("writing executePendingBindings for %s", className)
             do {

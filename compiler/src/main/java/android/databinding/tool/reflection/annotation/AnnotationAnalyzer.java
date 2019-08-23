@@ -21,6 +21,8 @@ import android.databinding.tool.reflection.ModelAnalyzer;
 import android.databinding.tool.reflection.ModelClass;
 import android.databinding.tool.reflection.TypeUtil;
 import android.databinding.tool.util.L;
+import com.google.auto.common.MoreElements;
+import com.google.auto.common.MoreTypes;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -94,7 +96,7 @@ public class AnnotationAnalyzer extends ModelAnalyzer {
             if (typeElement == null) {
                 return null;
             }
-            declaredType = typeUtils.getDeclaredType(typeElement);
+            declaredType = MoreTypes.asDeclared(typeElement.asType());
         } else {
             int templateCloseIndex = className.lastIndexOf('>');
             String paramStr = className.substring(templateOpenIndex + 1, templateCloseIndex);

@@ -17,18 +17,14 @@ package android.databinding.tool.reflection
 
 import android.databinding.tool.BindableCompat
 import android.databinding.tool.ext.toTypeName
-import android.databinding.tool.reflection.Callable.Type
-import android.databinding.tool.util.L
-import android.databinding.tool.util.StringUtils
-
-import com.squareup.javapoet.TypeName
-
-import java.util.ArrayList
-import java.util.Arrays
-
 import android.databinding.tool.reflection.Callable.CAN_BE_INVALIDATED
 import android.databinding.tool.reflection.Callable.DYNAMIC
 import android.databinding.tool.reflection.Callable.STATIC
+import android.databinding.tool.reflection.Callable.Type
+import android.databinding.tool.util.L
+import android.databinding.tool.util.StringUtils
+import com.squareup.javapoet.TypeName
+import java.util.*
 
 @Suppress("EqualsOrHashCode")
 abstract class ModelClass {
@@ -314,6 +310,22 @@ abstract class ModelClass {
     val isKotlinUnit by lazy(LazyThreadSafetyMode.NONE) {
         "kotlin.Unit" == typeName.toString()
     }
+
+    /**
+     * Provides the java code that should be generated for this class when it is used as the declared type
+     * of a variable.
+     *
+     * In data binding, a user declares a type when defining a `&lt;variable&gt;` tag, and they may
+     * omit the generic parameter there, e.g. declaring `&lt;variable type="MyGeneric"&gt;` when the
+     * actual class is `MyGeneric&lt;T: Foo&gt;`. In that case, we need to keep the type-erased version
+     * for public APIs, which gets returned by [toJavaCode]. However, when we declare a variable with
+     * the type, e.g. for internal implementations, we need to add the type information,
+     * e.g. `MyGeneric&lt;Foo&gt;`, which is returned by this method.
+     *
+     * See: b/139738910, b/123409929
+     */
+
+    open fun toDeclarationCode() = toJavaCode()
 
     abstract fun toJavaCode(): String
 

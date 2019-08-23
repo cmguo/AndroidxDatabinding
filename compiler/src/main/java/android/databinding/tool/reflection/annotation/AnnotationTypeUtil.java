@@ -246,7 +246,7 @@ public class AnnotationTypeUtil extends TypeUtil {
     }
 
     private String toJava(TypeVariable typeVariable) {
-        StringBuilder sb = new StringBuilder(typeVariable.asElement().getSimpleName().toString());
+        StringBuilder sb = new StringBuilder("?");
         TypeMirror upperBound = typeVariable.getUpperBound();
         String upperBoundString = toJava(upperBound);
         if (!"java.lang.Object".equals(upperBoundString)) {

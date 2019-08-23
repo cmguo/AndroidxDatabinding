@@ -25,7 +25,6 @@ import android.databinding.tool.reflection.annotation.AnnotationLogger
 import android.databinding.tool.store.SetterStore
 import android.databinding.tool.util.GenerationalClassUtil
 import android.databinding.tool.util.L
-import java.io.File
 import javax.annotation.processing.ProcessingEnvironment
 
 /**
@@ -36,10 +35,11 @@ import javax.annotation.processing.ProcessingEnvironment
  * Singletons are expected to use this to keep their instances.
  */
 object Context {
-    private val logger : AnnotationLogger = AnnotationLogger()
+    private val logger: AnnotationLogger = AnnotationLogger()
     @JvmStatic
+    @JvmOverloads
     fun init(processingEnvironment: ProcessingEnvironment,
-             args : CompilerArguments) {
+             args: CompilerArguments) {
         L.setClient(logger)
         val hasAndroidXBinding = discoverAndroidX(processingEnvironment)
         libTypes = LibTypes(hasAndroidXBinding)
@@ -74,27 +74,27 @@ object Context {
     }
 
     @JvmStatic
-    var modelAnalyzer : ModelAnalyzer? = null
+    var modelAnalyzer: ModelAnalyzer? = null
         private set
 
     @JvmStatic
-    var setterStore : SetterStore? = null
+    var setterStore: SetterStore? = null
         private set
 
     @JvmStatic
-    var generationalClassUtil : GenerationalClassUtil? = null
+    var generationalClassUtil: GenerationalClassUtil? = null
         private set
 
     @JvmStatic
-    var typeUtil : TypeUtil? = null
+    var typeUtil: TypeUtil? = null
         private set
 
     @JvmStatic
-    var sdkUtil : SdkUtil? = null
+    var sdkUtil: SdkUtil? = null
         private set
 
     @JvmStatic
-    var libTypes : LibTypes? = null
+    var libTypes: LibTypes? = null
         private set
 
     @JvmStatic

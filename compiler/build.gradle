@@ -1,3 +1,5 @@
+import org.gradle.internal.jvm.Jvm
+
 /*
  * Copyright (C) 2014 The Android Open Source Project
  *
@@ -34,6 +36,7 @@ dependencies {
     compile project(':dataBinding:compilerCommon')
     compile project(':dataBinding:baseLibrary')
     compile libs.kotlin_stdlib
+    compile libs.auto_common
 
     compile libs.apache_commons_io
     compile libs.apache_commons_codec
@@ -41,6 +44,12 @@ dependencies {
     compile libs.juniversalchardet
     testCompile libs.junit
     testCompile libs.mockito_core
+    testImplementation libs.compile_testing
+    testImplementation libs.truth
+
+    if (!Jvm.current().javaVersion.isJava9Compatible()) {
+        testImplementation files(Jvm.current().getToolsJar())
+    }
 }
 
 uploadArchives {
