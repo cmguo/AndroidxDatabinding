@@ -25,10 +25,19 @@ import android.databinding.tool.util.GenerationalClassUtil;
 import android.databinding.tool.util.L;
 import android.databinding.tool.util.Preconditions;
 import android.databinding.tool.util.StringUtils;
-
 import com.android.annotations.NonNull;
 import com.android.annotations.Nullable;
 
+import javax.annotation.processing.ProcessingEnvironment;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
+import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.ArrayType;
+import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.TypeKind;
+import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -44,17 +53,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-
-import javax.annotation.processing.ProcessingEnvironment;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
-import javax.lang.model.type.ArrayType;
-import javax.lang.model.type.DeclaredType;
-import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
 
 public class SetterStore {
     private static final int ASSIGNABLE_CONVERSION = 1;
@@ -625,6 +623,18 @@ public class SetterStore {
             bestSetter.setterCall.setConverter(conversionMethod);
         }
 
+        if (bestSetter.setterCall == null && viewType.isViewDataBinding()) {
+            // if it is a binding, try to find setter on the view class.
+            SetterCall rootViewSetter = getSetterCall(
+                    attribute,
+                    viewType.findInstanceGetter("getRoot").getReturnType(),
+                    valueType,
+                    imports);
+            if (rootViewSetter != null) {
+                // replace with a root view getter and return it
+                return new ViewBindingRootViewSetterCall(rootViewSetter);
+            }
+        }
         return bestSetter.setterCall;
     }
 
@@ -2089,6 +2099,58 @@ public class SetterStore {
             this.call = call;
             this.returnType = returnType;
             this.viewType = viewType;
+        }
+    }
+
+    /**
+     * A ViewBinding can support setters on its root view. This wrapper is injected when include tag
+     * has a binding on directly its view.
+     */
+    private static class ViewBindingRootViewSetterCall extends SetterCall {
+
+        private final SetterCall mWrapped;
+
+        public ViewBindingRootViewSetterCall(SetterCall wrapped) {
+            mWrapped = wrapped;
+        }
+
+        @Override
+        public boolean requiresOldValue() {
+            return  mWrapped.requiresOldValue();
+        }
+
+        @Override
+        public ModelClass[] getParameterTypes() {
+            return mWrapped.getParameterTypes();
+        }
+
+        @Override
+        public String getBindingAdapterInstanceClass() {
+            return mWrapped.getBindingAdapterInstanceClass();
+        }
+
+        @Override
+        public String getDescription() {
+            return mWrapped.getDescription();
+        }
+
+        @Override
+        protected String toJavaInternal(String componentExpression, String viewExpression,
+                                        String converted) {
+            return mWrapped.toJavaInternal(componentExpression, viewExpression + ".getRoot()",
+                    converted);
+        }
+
+        @Override
+        protected String toJavaInternal(String componentExpression, String viewExpression,
+                                        String oldValue, String converted) {
+            return mWrapped.toJavaInternal(componentExpression, viewExpression + ".getRoot()",
+                    oldValue, converted);
+        }
+
+        @Override
+        public int getMinApi() {
+            return mWrapped.getMinApi();
         }
     }
 }

@@ -19,6 +19,7 @@
         <variable name="outerObject" type="android.databinding.testapp.vo.NotBindableVo"/>
         <variable name="map" type="ObservableArrayMap&lt;String, String&gt;"/>
         <variable name="visibility" type="int"/>
+        <variable name="minHeight" type="int" />
     </data>
     <FrameLayout
             android:layout_width="match_parent"
@@ -78,6 +79,15 @@
                 android:id="@+id/trackedInclude"
                 layout="@layout/include_tracker"
                 android:innerObject="@{outerObject}"/>
+            <include
+                layout="@layout/simple_text"
+                android:id="@+id/plainLayoutWithBinding"
+                bind:includeMinHeightAdapter="@{minHeight}"/>
+            <include
+                layout="@layout/included_layout"
+                android:id="@+id/bindingLayoutWithRootViewAdapter"
+                bind:includeMinHeightAdapter="@{minHeight}"/>
+
         </LinearLayout>
     </FrameLayout>
 </layout>

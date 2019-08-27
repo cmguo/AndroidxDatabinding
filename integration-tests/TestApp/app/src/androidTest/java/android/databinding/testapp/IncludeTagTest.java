@@ -103,6 +103,11 @@ public class IncludeTagTest extends BaseDataBinderTest<LayoutWithIncludeBinding>
         assertEquals(mBinder.includedPlainLayout.getClass(), FrameLayout.class);
         assertEquals(((FrameLayout) mBinder.includedPlainLayout).getChildCount(), 0);
         assertNull(mBinder.includedMergeLayout);
+
+        mBinder.setMinHeight(41);
+        mBinder.executePendingBindings();
+        assertEquals(mBinder.bindingLayoutWithRootViewAdapter.getRoot().getMinimumHeight(), 41);
+        assertEquals(mBinder.plainLayoutWithBinding.getMinimumHeight(), 41);
     }
 
     // Make sure that when an included layout's executePendingBindings is run that the include
