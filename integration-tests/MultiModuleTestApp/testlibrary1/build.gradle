@@ -45,7 +45,7 @@ android {
 }
 
 dependencies {
-    api fileTree(dir: 'libs', include: ['*.aar'])
+    api "com.example.android.databinding.v1:lib-compile-with-v1:1.0"
     implementation "androidx.cardview:cardview:1.0.0"
     androidTestCompile ('androidx.test:runner:1.1.0') {
         exclude module: 'support-annotations'

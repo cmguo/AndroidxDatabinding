@@ -5,10 +5,9 @@ version using V1.
 
 Currently, it is used to reproduce b/117666264 as in the
 MultiModuleTestApp. If you wish to modify this, don't
-forget to update the aar in MultiModuleTestApp/app/libs.
+forget to update the maven repo in MultiModuleTestApp.
 
 to update:
 ```
-./gradlew assembleDebug && cp library/build/outputs/aar/library-debug.aar \
-../MultiModuleTestApp/testlibrary1/libs/lib_with_layout_v1.aar
+./gradlew -Pmaven_repo=/path/to/MultiModuleTestApp/testlibrary1/repo uploadArchives
  ```

@@ -15,3 +15,12 @@ if (!rootProject.ext.runningInIde) {
         project.apply from: "../../commonLocalRepo.gradle"
     }
 }
+
+allprojects {
+    repositories {
+        maven {
+           url "file://${rootProject.projectDir}/testlibrary1/repo"
+        }
+    }
+}
+
