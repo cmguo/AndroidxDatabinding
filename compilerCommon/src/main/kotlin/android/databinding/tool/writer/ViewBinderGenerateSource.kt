@@ -263,20 +263,41 @@ private class JavaFileGenerator(
         }
 
         binder.bindings.forEach { binding ->
-            val name = localNames.newName(binding.name, binding)
-            constructorParams += CodeBlock.of(L, name)
+            val viewName = localNames.newName(binding.name)
 
-            addStatement("$T $name = $N.findViewById($L)",
-                binding.type, rootParam, binding.idReference.asCode())
+            val viewType = when (binding.form) {
+                ViewBinding.Form.View -> binding.type
+                ViewBinding.Form.Binder -> ANDROID_VIEW
+            }
+            addStatement("$T $viewName = $N.findViewById($L)",
+                viewType, rootParam, binding.idReference.asCode())
 
             if (binding.isRequired) {
                 check(missingId != null)
 
-                beginControlFlow("if ($name == null)")
+                beginControlFlow("if ($viewName == null)")
                 addStatement("$missingId = $S", binding.name)
                 addStatement("break missingId")
                 endControlFlow()
             }
+
+            val constructorParam = when (binding.form) {
+                ViewBinding.Form.View -> viewName
+                ViewBinding.Form.Binder -> {
+                    val binderName = localNames.newName("${binding.name}Binding")
+                    if (binding.isRequired) {
+                        addStatement("$1T $binderName = $1T.bind($viewName)", binding.type)
+                    } else {
+                        addStatement("""
+                            $1T $binderName = $viewName != null
+                            ? $1T.bind($viewName)
+                            : null
+                        """.trimIndent(), binding.type)
+                    }
+                    binderName
+                }
+            }
+            constructorParams += CodeBlock.of(L, constructorParam)
         }
 
         addStatement("return new $T($L)", binder.generatedTypeName,

@@ -209,10 +209,13 @@ class ViewBinderGenerateSourceTest {
     }
 
     @Test fun bindingNameCollisions() {
+        layouts.write("other", "layout", "<FrameLayout/>")
         layouts.write("example", "layout", """
             <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
                 <TextView android:id="@+id/root_view" />
                 <TextView android:id="@+id/missing_id" />
+                <View android:id="@+id/other_binding" />
+                <include layout="@layout/other" android:id="@+id/other"/>
             </LinearLayout>
             """.trimIndent())
 
@@ -242,12 +245,20 @@ class ViewBinderGenerateSourceTest {
                 |  public final TextView missingId;
                 |
                 |  @NonNull
+                |  public final OtherBinding other;
+                |
+                |  @NonNull
+                |  public final View otherBinding;
+                |
+                |  @NonNull
                 |  public final TextView rootView;
                 |
                 |  private ExampleBinding(@NonNull LinearLayout rootView_, @NonNull TextView missingId,
-                |      @NonNull TextView rootView) {
+                |      @NonNull OtherBinding other, @NonNull View otherBinding, @NonNull TextView rootView) {
                 |    this.rootView_ = rootView_;
                 |    this.missingId = missingId;
+                |    this.other = other;
+                |    this.otherBinding = otherBinding;
                 |    this.rootView = rootView;
                 |  }
                 |
@@ -281,12 +292,24 @@ class ViewBinderGenerateSourceTest {
                 |        missingId = "missingId";
                 |        break missingId;
                 |      }
+                |      View other = rootView.findViewById(R.id.other);
+                |      if (other == null) {
+                |        missingId = "other";
+                |        break missingId;
+                |      }
+                |      OtherBinding otherBinding = OtherBinding.bind(other);
+                |      View otherBinding_ = rootView.findViewById(R.id.other_binding);
+                |      if (otherBinding_ == null) {
+                |        missingId = "otherBinding";
+                |        break missingId;
+                |      }
                 |      TextView rootView_ = rootView.findViewById(R.id.root_view);
                 |      if (rootView_ == null) {
                 |        missingId = "rootView";
                 |        break missingId;
                 |      }
-                |      return new ExampleBinding((LinearLayout) rootView, missingId_, rootView_);
+                |      return new ExampleBinding((LinearLayout) rootView, missingId_, otherBinding,
+                |          otherBinding_, rootView_);
                 |    }
                 |    throw new NullPointerException(
                 |        "Missing required view with ID: ".concat(missingId));
@@ -519,6 +542,29 @@ class ViewBinderGenerateSourceTest {
             contains("""
                 |  public View getRoot() {
                 """.trimMargin())
+        }
+    }
+
+    @Test fun optionalIncludeConditionallyCallsBind() {
+        layouts.write("other", "layout", "<FrameLayout/>")
+        layouts.write("example", "layout", """
+            <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android">
+                <include
+                    android:id="@+id/other"
+                    layout="@layout/other"
+                    />
+            </FrameLayout>
+        """.trimIndent())
+        layouts.write("example", "layout-land", "<FrameLayout/>")
+
+        val model = layouts.parse().getValue("example")
+        model.toViewBinder().toJavaFile().assert {
+            contains("""
+                |    View other = rootView.findViewById(R.id.other);
+                |    OtherBinding otherBinding = other != null
+                |        ? OtherBinding.bind(other)
+                |        : null;
+            """.trimMargin())
         }
     }
 }

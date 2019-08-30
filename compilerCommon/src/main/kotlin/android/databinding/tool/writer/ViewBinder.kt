@@ -25,7 +25,6 @@ import android.databinding.tool.store.ResourceBundle.BindingTargetBundle
 import android.databinding.tool.writer.ViewBinder.RootNode
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
-import com.squareup.javapoet.TypeName
 
 /** The model for a view binder which corresponds to a single layout and its contained views. */
 data class ViewBinder(
@@ -53,7 +52,8 @@ data class ViewBinder(
 /** The model for a view binding which corresponds to a single view inside of a layout. */
 data class ViewBinding(
     val name: String,
-    val type: TypeName,
+    val type: ClassName,
+    val form: Form,
     val idReference: ResourceReference,
     /** Layout folders that this view is present in. */
     val presentConfigurations: List<String>,
@@ -70,6 +70,11 @@ data class ViewBinding(
     }
 
     val isRequired get() = absentConfigurations.isEmpty()
+
+    enum class Form {
+        View, Binder
+        // TODO ViewStub
+    }
 }
 
 data class ResourceReference(val rClassName: ClassName, val type: String, val name: String) {
@@ -85,6 +90,7 @@ fun BaseLayoutModel.toViewBinder(): ViewBinder {
         return ViewBinding(
           name = fieldName(this),
           type = fieldType.toClassName(),
+          form = if (isBinder) ViewBinding.Form.Binder else ViewBinding.Form.View,
           idReference = idReference,
           presentConfigurations = present,
           absentConfigurations = absent
