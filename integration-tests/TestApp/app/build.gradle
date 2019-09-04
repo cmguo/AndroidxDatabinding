@@ -33,23 +33,22 @@ android {
 dependencies {
     def supportVersion = "1.0.0"
     def lifecycleVersion = "2.0.0"
-    compile fileTree(dir: 'libs', include: ['*.jar'])
-    //compile "androidx.appcompat:appcompat:$supportVersion"
-    compile "androidx.annotation:annotation:$supportVersion"
-    provided 'javax.annotation:jsr250-api:1.0'
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "androidx.annotation:annotation:$supportVersion"
+    compileOnly 'javax.annotation:jsr250-api:1.0'
     implementation "androidx.lifecycle:lifecycle-runtime:$lifecycleVersion"
     implementation "androidx.lifecycle:lifecycle-livedata:$lifecycleVersion"
     implementation "androidx.fragment:fragment:$supportVersion"
-    androidTestCompile ('com.android.support.test:runner:1.0.1') {
+    androidTestImplementation ('com.android.support.test:runner:1.0.1') {
         exclude module: 'support-annotations'
     }
-    androidTestCompile ('com.android.support.test.espresso:espresso-core:3.0.1') {
+    androidTestImplementation ('com.android.support.test.espresso:espresso-core:3.0.1') {
         exclude module: 'support-annotations'
     }
-    testCompile 'junit:junit:4.12'
-    androidTestCompile "org.mockito:mockito-core:1.9.5"
-    androidTestCompile "com.google.dexmaker:dexmaker:1.2"
-    androidTestCompile "com.google.dexmaker:dexmaker-mockito:1.2"
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation "org.mockito:mockito-core:1.9.5"
+    androidTestImplementation "com.google.dexmaker:dexmaker:1.2"
+    androidTestImplementation "com.google.dexmaker:dexmaker-mockito:1.2"
 }
 
 gradle.projectsEvaluated {
