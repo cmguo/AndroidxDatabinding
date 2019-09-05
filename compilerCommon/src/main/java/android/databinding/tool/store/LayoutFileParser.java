@@ -153,9 +153,8 @@ public final class LayoutFileParser {
                 return null;
             }
 
-            // TODO does this restriction also exist for view binding?
             boolean isMerge = "merge".equals(rootView.elmName.getText());
-            if (isMerge && !filter(rootView, "include").isEmpty()) {
+            if (isBindingData && isMerge && !filter(rootView, "include").isEmpty()) {
                 L.e(ErrorMessages.INCLUDE_INSIDE_MERGE);
                 return null;
             }
