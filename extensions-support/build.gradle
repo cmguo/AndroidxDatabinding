@@ -139,7 +139,7 @@ task createArchive(type: Zip) {
     }
     baseName = "dataBindingRuntimeRepo"
     doLast {
-    println "created rpeo at  ${dataBindingConfig.maven}"
+        println "created repo at ${dataBindingConfig.maven}"
     }
 }
 
