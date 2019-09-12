@@ -19,8 +19,8 @@ package android.databinding.tool.writer
 import android.databinding.tool.ext.N
 import android.databinding.tool.ext.T
 import android.databinding.tool.ext.XmlResourceReference
+import android.databinding.tool.ext.parseLayoutClassName
 import android.databinding.tool.ext.parseXmlResourceReference
-import android.databinding.tool.ext.toClassName
 import android.databinding.tool.store.ResourceBundle.BindingTargetBundle
 import android.databinding.tool.writer.ViewBinder.RootNode
 import com.squareup.javapoet.ClassName
@@ -89,7 +89,7 @@ fun BaseLayoutModel.toViewBinder(): ViewBinder {
 
         return ViewBinding(
           name = fieldName(this),
-          type = fieldType.toClassName(),
+          type = parseLayoutClassName(fieldType),
           form = if (isBinder) ViewBinding.Form.Binder else ViewBinding.Form.View,
           idReference = idReference,
           presentConfigurations = present,
@@ -114,7 +114,7 @@ fun BaseLayoutModel.toViewBinder(): ViewBinder {
     } else {
         val rootViewType = variations
             // Create a set of root node view types for all variations.
-            .mapTo(LinkedHashSet()) { it.rootNodeViewType.toClassName() }
+            .mapTo(LinkedHashSet()) { parseLayoutClassName(it.rootNodeViewType) }
             // If all of the variations agree on the type, use it.
             .singleOrNull()
             // Otherwise fall back to View.

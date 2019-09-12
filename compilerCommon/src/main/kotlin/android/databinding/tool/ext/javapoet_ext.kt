@@ -59,11 +59,15 @@ fun fieldSpec(
     body: FieldSpec.Builder.() -> Unit = {}
 ): FieldSpec = FieldSpec.builder(type, name).apply(body).build()
 
+fun String.toClassName(): ClassName = ClassName.bestGuess(this)
+
 /**
- * Parse [this] as if it were a qualified class name. Qualified class names must have lowercase
- * package name components which are separated by a period ('.'). Classes must start with an
- * uppercase letter. Nested class names are separated by a dollar sign ('$').
+ * Parse [value] as a qualified layout XML class name. Unlike normal qualified class name
+ * references, nested classes are separated by dollar signs ('$') instead of periods ('.').
  */
-fun String.toClassName() : ClassName {
-    return ClassName.bestGuess(replace('$', '.'))
+fun parseLayoutClassName(value: String): ClassName {
+    val lastDot = value.lastIndexOf('.')
+    val packageName = if (lastDot == -1) "" else value.substring(0, lastDot)
+    val simpleNames = value.substring(lastDot + 1).split('$')
+    return ClassName.get(packageName, simpleNames.first(), *simpleNames.drop(1).toTypedArray())
 }
