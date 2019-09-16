@@ -567,4 +567,42 @@ class ViewBinderGenerateSourceTest {
             """.trimMargin())
         }
     }
+
+    @Test fun fragmentNodesAreNotExposed() {
+        layouts.write("as_root", "layout", """
+            <fragment
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/fragment"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                />
+        """.trimIndent())
+        layouts.write("as_child", "layout", """
+            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
+                <View
+                    android:id="@+id/one"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    />
+                <fragment
+                    class="android.app.Fragment"
+                    android:id="@+id/two"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    />
+            </LinearLayout>
+        """.trimIndent())
+
+        val fragmentAsRootModel = layouts.parse().getValue("as_root")
+        fragmentAsRootModel.toViewBinder().toJavaFile().assert {
+            contains("View getRoot()")
+            doesNotContain("fragment")
+        }
+
+        val fragmentAsChildModel = layouts.parse().getValue("as_child")
+        fragmentAsChildModel.toViewBinder().toJavaFile().assert {
+            contains("one")
+            doesNotContain("two")
+        }
+    }
 }

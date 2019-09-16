@@ -38,6 +38,10 @@ class JavaFileSubject(
         assertThat(actualString).contains(expected)
     }
 
+    fun doesNotContain(expected: String) {
+        assertThat(actualString).doesNotContain(expected)
+    }
+
     fun parsesAs(expected: String) {
         assertAbout(JavaSourceSubjectFactory.javaSource())
             .that(JavaFileObjects.forSourceString("Actual", actual().toString()))

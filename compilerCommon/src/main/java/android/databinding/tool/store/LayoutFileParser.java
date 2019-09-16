@@ -321,9 +321,13 @@ public final class LayoutFileParser {
             if (Strings.isNullOrEmpty(classNode)) {
                 L.e("No class attribute for 'view' node");
             }
-            viewName = classNode;
-        } else if ("include".equals(viewName) && !XmlEditor.hasExpressionAttributes(elm)) {
-            viewName = "android.view.View";
+            return classNode;
+        }
+        if ("include".equals(viewName) && !XmlEditor.hasExpressionAttributes(elm)) {
+            return "android.view.View";
+        }
+        if ("fragment".equals(viewName)) {
+            return "android.view.View";
         }
         return viewName;
     }
