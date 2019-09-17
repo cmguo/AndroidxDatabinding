@@ -22,7 +22,7 @@ public class GenericContainer<T> {
     public T val;
     private T mVal2;
     public int nonGenericVal;
-    public MutableLiveData<Integer> typedLiveData;
+    public MutableLiveData<Integer> typedLiveData = new MutableLiveData<>();
     public GenericContainer(T val) {
         this.val = val;
         this.mVal2 = val;

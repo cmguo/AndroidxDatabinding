@@ -47,6 +47,7 @@ public class GenericAdapterTest extends BaseDataBinderTest<GenericAdapterBinding
         BasicObject obj = new BasicObject();
         GenericContainer<BasicObject> container = new GenericContainer<>(obj);
         container.nonGenericVal = View.INVISIBLE;
+        container.typedLiveData.setValue(View.INVISIBLE);
         obj.setField1("Yes, it worked");
         getBinder().setUnspecifiedGeneric(container);
         getBinder().setList(list);
