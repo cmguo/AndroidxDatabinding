@@ -82,9 +82,10 @@ data class ResourceReference(val rClassName: ClassName, val type: String, val na
 }
 
 fun BaseLayoutModel.toViewBinder(): ViewBinder {
+    val rClassName = ClassName.get(modulePackage, "R")
+
     fun BindingTargetBundle.toBinding(): ViewBinding {
-        val modulePackage = modulePackage ?: this@toViewBinder.modulePackage
-        val idReference = id.parseXmlResourceReference().toResourceReference(modulePackage)
+        val idReference = id.parseXmlResourceReference().toResourceReference(rClassName)
         val (present, absent) = layoutConfigurationMembership(this)
 
         return ViewBinding(
@@ -125,16 +126,16 @@ fun BaseLayoutModel.toViewBinder(): ViewBinder {
 
     return ViewBinder(
         generatedTypeName = ClassName.get(bindingClassPackage, bindingClassName),
-        layoutReference = ResourceReference(ClassName.get(modulePackage, "R"), "layout", baseFileName),
+        layoutReference = ResourceReference(rClassName, "layout", baseFileName),
         bindings = sortedTargets.filter { it.id != null }.map { it.toBinding() },
         rootNode = rootNode
     )
 }
 
-private fun XmlResourceReference.toResourceReference(modulePackage: String): ResourceReference {
+private fun XmlResourceReference.toResourceReference(moduleRClass: ClassName): ResourceReference {
     val rClassName = when (namespace) {
         "android" -> ANDROID_R
-        null -> ClassName.get(modulePackage, "R")
+        null -> moduleRClass
         else -> throw IllegalArgumentException("Unknown namespace: $this")
     }
     return ResourceReference(rClassName, type, name)

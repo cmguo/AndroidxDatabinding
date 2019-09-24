@@ -1,2 +1,3 @@
-// Intentionally empty to prevent Gradle from thinking that this
-// module is part of the larger data-binding Gradle project.
+include ':app'
+include ':lib-with-view-binding'
+include ':lib-without-view-binding'
