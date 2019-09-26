@@ -316,4 +316,10 @@ private class JavaFileGenerator(
             )
         }
     }
+
+    /** Return the storage type for the view backing a [RootNode]. */
+    private val RootNode.type get() = when (this) {
+        is RootNode.Merge -> ANDROID_VIEW
+        is RootNode.View -> type
+    }
 }

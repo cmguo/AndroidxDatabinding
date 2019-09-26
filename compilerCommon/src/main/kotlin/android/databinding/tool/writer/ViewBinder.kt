@@ -40,12 +40,8 @@ data class ViewBinder(
     }
 
     sealed class RootNode {
-        abstract val type: ClassName
-
-        object Merge : RootNode() {
-            override val type get() = ANDROID_VIEW
-        }
-        data class View(override val type: ClassName): RootNode()
+        object Merge : RootNode()
+        data class View(val type: ClassName): RootNode()
     }
 }
 
