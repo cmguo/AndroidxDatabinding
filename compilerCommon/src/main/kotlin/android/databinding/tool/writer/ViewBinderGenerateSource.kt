@@ -298,6 +298,8 @@ private class JavaFileGenerator(
                 }
             }
             constructorParams += CodeBlock.of(L, constructorParam)
+
+            addCode("\n")
         }
 
         addStatement("return new $T($L)", binder.generatedTypeName,
