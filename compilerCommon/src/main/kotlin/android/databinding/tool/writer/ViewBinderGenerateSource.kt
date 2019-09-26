@@ -45,7 +45,7 @@ fun ViewBinder.generatedClassInfo() = GenClassInfoLog.GenClass(
     qName = generatedTypeName.toString(),
     modulePackage = generatedTypeName.packageName(),
     variables = emptyMap(),
-    implementations = emptySet() // TODO see if we need this
+    implementations = emptySet()
 )
 
 private class JavaFileGenerator(
