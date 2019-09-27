@@ -75,7 +75,7 @@ private class JavaFileGenerator(
         val viewBindingPackage = if (useLegacyAnnotations) "android" else "androidx"
         addSuperinterface(ClassName.get("$viewBindingPackage.viewbinding", "ViewBinding"))
 
-        // TODO determine if we can elide the separate root field if the root tag has an ID.
+        // TODO elide the separate root field if the root tag has an ID (and isn't a binder)
         addField(rootViewField())
         addFields(bindingFields())
 
@@ -262,6 +262,7 @@ private class JavaFileGenerator(
             CodeBlock.of(N, rootParam)
         }
 
+        val rootBinding = (binder.rootNode as? RootNode.Binding)?.binding
         binder.bindings.forEach { binding ->
             val viewName = localNames.newName(binding.name)
 
@@ -269,8 +270,17 @@ private class JavaFileGenerator(
                 ViewBinding.Form.View -> binding.type
                 ViewBinding.Form.Binder -> ANDROID_VIEW
             }
-            addStatement("$T $viewName = $N.findViewById($L)",
-                viewType, rootParam, binding.idReference.asCode())
+            val viewInitializer = if (binding === rootBinding) {
+                // If this corresponds to the root binding, we can re-use the input View argument.
+                if (binding.type != ANDROID_VIEW) {
+                    CodeBlock.of("($T) $N", viewType, rootParam)
+                } else {
+                    CodeBlock.of(N, rootParam)
+                }
+            } else {
+                CodeBlock.of("$N.findViewById($L)", rootParam, binding.id.asCode())
+            }
+            addStatement("$T $viewName = $L", viewType, viewInitializer)
 
             if (binding.isRequired) {
                 check(missingId != null)
@@ -321,5 +331,6 @@ private class JavaFileGenerator(
     private val RootNode.type get() = when (this) {
         is RootNode.Merge -> ANDROID_VIEW
         is RootNode.View -> type
+        is RootNode.Binding -> binding.type
     }
 }
