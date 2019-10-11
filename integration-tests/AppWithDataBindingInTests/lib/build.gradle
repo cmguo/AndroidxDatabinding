@@ -26,7 +26,7 @@ android {
     }
 
     // Set up data binding and Robolectric
-    dataBinding.enabled = true
+    buildFeatures.dataBinding = true
     testOptions.unitTests.includeAndroidResources = true
 }
 
