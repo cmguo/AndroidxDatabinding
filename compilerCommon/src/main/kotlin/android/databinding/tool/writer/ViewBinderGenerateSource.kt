@@ -230,36 +230,40 @@ private class JavaFileGenerator(
         }
         addParameter(rootParam)
 
-        if (binder.bindings.isEmpty()) {
-            // Without any bindings, an erroneously-null rootView can be propagated into the binding
-            // instance and its non-null getRoot() method. Synthesize a null check to prevent this.
+        val rootBinding = (binder.rootNode as? RootNode.Binding)?.binding
+        val nonRootBindings = binder.bindings.filter { it !== rootBinding }
+
+        if (nonRootBindings.isEmpty()) {
+            // Without any bindings that invoke findViewById, an erroneously-null rootView can be
+            // propagated into the binding instance and its non-null getRoot() method. Synthesize
+            // an explicit null check to prevent this.
             beginControlFlow("if ($N == null)", rootParam)
             addStatement("throw new $T($S)", NullPointerException::class.java, rootParam.name)
             endControlFlow()
+            addCode("\n")
         }
 
         /** Non-null when error-handling is being generated. */
-        val missingId: String?
+        val id: String?
 
-        if (binder.bindings.any { it.isRequired }) {
+        if (nonRootBindings.any { it.isRequired }) {
             addComment("The body of this method is generated in a way you would not otherwise write.")
             addComment("This is done to optimize the compiled bytecode for size and performance.")
 
-            missingId = localNames.newName("missingId")
-            addStatement("$T $missingId", String::class.java)
+            id = localNames.newName("id")
+            addStatement("int $id")
 
             // By using a named block and break statements, the generated code compiles to bytecode
             // which optimizes for the common case of all required views being present. It also allows
             // de-duplicating the exception handling code to save bytecode size.
             beginControlFlow("missingId:")
         } else {
-            missingId = null
+            id = null
         }
 
         val constructorParams = mutableListOf<CodeBlock>()
         constructorParams += rootParam.asViewReference(binder.rootNode.type)
 
-        val rootBinding = (binder.rootNode as? RootNode.Binding)?.binding
         binder.bindings.forEach { binding ->
             val viewName = localNames.newName(binding.name)
 
@@ -270,16 +274,17 @@ private class JavaFileGenerator(
             val viewInitializer = if (binding === rootBinding) {
                 // If this corresponds to the root binding, we can re-use the input View argument.
                 rootParam.asViewReference(viewType)
+            } else if (binding.isRequired) {
+                // Place the id value first into the local in case it's needed for error handling.
+                addStatement("$id = $L", binding.id.asCode())
+                CodeBlock.of("$N.findViewById($id)", rootParam)
             } else {
                 CodeBlock.of("$N.findViewById($L)", rootParam, binding.id.asCode())
             }
             addStatement("$T $viewName = $L", viewType, viewInitializer)
 
-            if (binding.isRequired) {
-                check(missingId != null)
-
+            if (binding.isRequired && binding !== rootBinding) {
                 beginControlFlow("if ($viewName == null)")
-                addStatement("$missingId = $S", binding.name)
                 addStatement("break missingId")
                 endControlFlow()
             }
@@ -308,8 +313,15 @@ private class JavaFileGenerator(
         addStatement("return new $T($L)", binder.generatedTypeName,
             CodeBlock.join(constructorParams, ",$W"))
 
-        if (missingId != null) {
+        if (id != null) {
             endControlFlow()
+
+            val missingId = localNames.newName("missingId")
+            addStatement(
+                "$T $missingId = $N.getResources().getResourceName($id)",
+                String::class.java,
+                rootParam
+            )
 
             // String.concat(String) produces less bytecode than '+' (StringBuilder).
             addStatement(

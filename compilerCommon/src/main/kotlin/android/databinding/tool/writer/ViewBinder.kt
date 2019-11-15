@@ -54,7 +54,11 @@ data class ViewBinder(
         /** Root view of type [type] with no ID or with IDs that vary across configurations. */
         data class View(val type: ClassName): RootNode()
         /** Root view is the same as that for [binding]. */
-        data class Binding(val binding: ViewBinding): RootNode()
+        data class Binding(val binding: ViewBinding): RootNode() {
+            init {
+                require(binding.isRequired) { "Root bindings cannot be optional" }
+            }
+        }
     }
 }
 
