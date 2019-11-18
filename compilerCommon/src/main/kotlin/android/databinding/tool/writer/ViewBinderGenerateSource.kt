@@ -32,6 +32,7 @@ import android.databinding.tool.writer.ViewBinder.RootNode
 import com.squareup.javapoet.ClassName
 import com.squareup.javapoet.CodeBlock
 import com.squareup.javapoet.NameAllocator
+import com.squareup.javapoet.ParameterSpec
 import com.squareup.javapoet.TypeName.BOOLEAN
 import javax.lang.model.element.Modifier.FINAL
 import javax.lang.model.element.Modifier.PRIVATE
@@ -256,11 +257,7 @@ private class JavaFileGenerator(
         }
 
         val constructorParams = mutableListOf<CodeBlock>()
-        constructorParams += if (binder.rootNode.type != ANDROID_VIEW) {
-            CodeBlock.of("($T) $N", binder.rootNode.type, rootParam)
-        } else {
-            CodeBlock.of(N, rootParam)
-        }
+        constructorParams += rootParam.asViewReference(binder.rootNode.type)
 
         val rootBinding = (binder.rootNode as? RootNode.Binding)?.binding
         binder.bindings.forEach { binding ->
@@ -272,11 +269,7 @@ private class JavaFileGenerator(
             }
             val viewInitializer = if (binding === rootBinding) {
                 // If this corresponds to the root binding, we can re-use the input View argument.
-                if (binding.type != ANDROID_VIEW) {
-                    CodeBlock.of("($T) $N", viewType, rootParam)
-                } else {
-                    CodeBlock.of(N, rootParam)
-                }
+                rootParam.asViewReference(viewType)
             } else {
                 CodeBlock.of("$N.findViewById($L)", rootParam, binding.id.asCode())
             }
@@ -324,6 +317,15 @@ private class JavaFileGenerator(
                 NullPointerException::class.java,
                 "Missing required view with ID: "
             )
+        }
+    }
+
+    /** Return a [CodeBlock] reference to [this] as [viewType], emitting a cast if needed. */
+    private fun ParameterSpec.asViewReference(viewType: ClassName): CodeBlock {
+        return if (viewType != ANDROID_VIEW) {
+            CodeBlock.of("($T) $N", viewType, this)
+        } else {
+            CodeBlock.of(N, this)
         }
     }
 
