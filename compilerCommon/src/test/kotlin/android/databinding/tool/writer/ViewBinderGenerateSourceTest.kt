@@ -657,6 +657,7 @@ class ViewBinderGenerateSourceTest {
         val model = layouts.parse().getValue("example")
         try {
             model.toViewBinder()
+            fail()
         } catch (e: IllegalStateException) {
             assertThat(e).hasMessageThat().isEqualTo("""
                 Configurations for example.xml must agree on the root element's ID.
@@ -668,6 +669,21 @@ class ViewBinderGenerateSourceTest {
                  - layout
                 """.trimIndent()
             )
+        }
+    }
+
+    @Test fun invalidNodeNameFailsWithNiceMessage() {
+        layouts.write("example", "layout", """
+            <layer-list xmlns:android="http://schemas.android.com/apk/res/android"/>
+        """.trimIndent())
+
+        val model = layouts.parse().getValue("example")
+        try {
+            model.toViewBinder()
+            fail()
+        } catch (e: IllegalArgumentException) {
+            assertThat(e).hasMessageThat()
+                .isEqualTo("Unable to parse \"android.widget.layer-list\" as class in example.xml")
         }
     }
 

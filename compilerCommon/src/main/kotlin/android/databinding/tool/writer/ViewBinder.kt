@@ -103,7 +103,7 @@ fun BaseLayoutModel.toViewBinder(): ViewBinder {
 
         return ViewBinding(
           name = fieldName(this),
-          type = parseLayoutClassName(fieldType),
+          type = parseLayoutClassName(fieldType, baseFileName),
           form = if (isBinder) ViewBinding.Form.Binder else ViewBinding.Form.View,
           id = idReference,
           presentConfigurations = present,
@@ -168,7 +168,7 @@ private fun BaseLayoutModel.parseRootNode(
 
     val rootViewType = variations
         // Create a set of root node view types for all variations.
-        .mapTo(LinkedHashSet()) { parseLayoutClassName(it.rootNodeViewType) }
+        .mapTo(LinkedHashSet()) { parseLayoutClassName(it.rootNodeViewType, baseFileName) }
         // If all of the variations agree on the type, use it.
         .singleOrNull()
         // Otherwise fall back to View.
