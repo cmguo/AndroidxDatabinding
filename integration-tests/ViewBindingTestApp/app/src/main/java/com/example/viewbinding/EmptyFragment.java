@@ -25,6 +25,6 @@ import android.view.ViewGroup;
 public final class EmptyFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup parent, Bundle savedInstanceState) {
-        return new View(getContext());
+        return new View(getActivity());
     }
 }
