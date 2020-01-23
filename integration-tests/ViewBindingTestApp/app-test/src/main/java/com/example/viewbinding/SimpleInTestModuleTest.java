@@ -26,7 +26,7 @@ import com.example.viewbinding.test.databinding.SimpleInTestModuleBinding;
 import org.junit.Test;
 
 public final class SimpleInTestModuleTest {
-    private final Context context = InstrumentationRegistry.getTargetContext();
+    private final Context context = InstrumentationRegistry.getContext();
     private final LayoutInflater inflater = LayoutInflater.from(context);
 
     @Test public void inflateWithParent() {
