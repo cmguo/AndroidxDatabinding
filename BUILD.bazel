@@ -143,12 +143,10 @@ fileset(
 
 kotlin_library(
     name = "tools.compilerCommon",
-    srcs = [
-        "compilerCommon/src/main/grammar-gen",
-        "compilerCommon/src/main/java",
-        "compilerCommon/src/main/kotlin",
-        "compilerCommon/src/main/xml-gen",
-    ],
+    srcs = glob([
+        "compilerCommon/src/main/**/*.kt",
+        "compilerCommon/src/main/**/*.java",
+    ]),
     pom = ":databinding-compiler-common.pom",
     resource_strip_prefix = "tools/data-binding",
     resources = [":tools.compilerCommon.resources"],
@@ -177,10 +175,10 @@ maven_pom(
 
 kotlin_test(
     name = "tools.compilerCommon_tests",
-    srcs = [
-        "compilerCommon/src/test/java",
-        "compilerCommon/src/test/kotlin",
-    ],
+    srcs = glob([
+        "compilerCommon/src/test/**/*.kt",
+        "compilerCommon/src/test/**/*.java",
+    ]),
     coverage = True,
     jvm_flags = ["-Dtest.suite.jar=tests.jar"],
     test_class = "com.android.testutils.JarTestSuite",
@@ -243,10 +241,10 @@ iml_module(
 # TODO: Use the right version of kotlin-compiler.
 kotlin_library(
     name = "tools.compiler",
-    srcs = [
-        "compiler/src/main/java",
-        "compiler/src/main/kotlin",
-    ],
+    srcs = glob([
+        "compiler/src/main/**/*.java",
+        "compiler/src/main/**/*.kt",
+    ]),
     pom = ":databinding-compiler.pom",
     resources = glob(["compiler/src/main/resources/**"]),
     visibility = ["//visibility:public"],
