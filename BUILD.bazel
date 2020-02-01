@@ -86,7 +86,6 @@ iml_module(
         "compilerCommon/src/main/grammar-gen",
     ],
     iml_files = ["compilerCommon/db-compilerCommon.iml"],
-    test_coverage = True,
     test_srcs = [
         "compilerCommon/src/test/java",
         "compilerCommon/src/test/kotlin",
@@ -181,7 +180,6 @@ kotlin_test(
         "compilerCommon/src/test/**/*.kt",
         "compilerCommon/src/test/**/*.java",
     ]),
-    coverage = True,
     jvm_flags = ["-Dtest.suite.jar=tests.jar"],
     test_class = "com.android.testutils.JarTestSuite",
     runtime_deps = ["//tools/base/testutils:tools.testutils"],
@@ -204,7 +202,6 @@ iml_module(
     ],
     iml_files = ["compiler/db-compiler.iml"],
     resources = ["compiler/src/main/resources"],
-    test_coverage = True,
     test_data = [
         "//prebuilts/studio/sdk:platforms/android-24",
         "//prebuilts/studio/sdk:platform-tools",
