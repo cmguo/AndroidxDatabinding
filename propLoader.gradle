@@ -67,7 +67,6 @@ subprojects {
 def enablePublishing(p, addJavadoc) {
     if (!dataBindingConfig.isIndependent) {
         p.apply from: "$dataBindingRootFolder/../buildSrc/base/publish.gradle"
-        p.apply from: "$dataBindingRootFolder/../buildSrc/base/bintray.gradle"
         if (addJavadoc) {
             p.apply from: "$dataBindingRootFolder/../buildSrc/base/javadoc.gradle"
         }
