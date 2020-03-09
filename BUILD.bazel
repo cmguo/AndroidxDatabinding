@@ -4,7 +4,7 @@ load("//tools/base/bazel:maven.bzl", "maven_java_library", "maven_pom")
 load("//tools/base/bazel:utils.bzl", "fileset", "merged_properties")
 load("//tools/base/bazel:gradle.bzl", "gradle_build")
 load("//tools/base/bazel:maven.bzl", "maven_repo")
-load("//tools/base/bazel:merge_archives.bzl", "merge_archives")
+load("//tools/base/bazel:merge_archives.bzl", "merge_jars")
 
 exports_files(["databinding.properties"])
 
@@ -418,12 +418,12 @@ filegroup(
     visibility = ["//visibility:public"],
 )
 
-merge_archives(
+merge_jars(
     name = "runtimeLibraries",
-    output_file = "data_binding_runtime.zip",
-    visibility = ["//visibility:public"],
-    zips = [
+    out = "data_binding_runtime.zip",
+    jars = [
         "//tools/data-binding:data_binding_runtime_support.zip",
         "//tools/data-binding:data_binding_runtime_androidx.zip",
     ],
+    visibility = ["//visibility:public"],
 )
