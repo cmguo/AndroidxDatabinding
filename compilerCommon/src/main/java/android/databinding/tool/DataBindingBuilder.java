@@ -91,11 +91,11 @@ public class DataBindingBuilder {
         ScopedException.encodeOutput(machineReadableOutput);
     }
 
-    public boolean getPrintMachineReadableOutput() {
+    public static boolean getPrintMachineReadableOutput() {
         return ScopedException.isEncodeOutput();
     }
 
-    public void setDebugLogEnabled(boolean enableDebugLogs) {
+    public static void setDebugLogEnabled(boolean enableDebugLogs) {
         L.setDebugLog(enableDebugLogs);
     }
 
@@ -131,8 +131,8 @@ public class DataBindingBuilder {
      * @param dataBindingCompilerBuildFolder the build folder for the data binding compiler
      * @return The list of classes to exclude. They are already in JNI format.
      */
-    public List<String> getJarExcludeList(LayoutXmlProcessor layoutXmlProcessor,
-            File generatedClassListFile, File dataBindingCompilerBuildFolder) {
+    public static List<String> getJarExcludeList(LayoutXmlProcessor layoutXmlProcessor,
+                                                 File generatedClassListFile, File dataBindingCompilerBuildFolder) {
         List<String> excludes = new ArrayList<>();
         String infoClassAsFile = layoutXmlProcessor.getInfoClassFullName().replace('.', '/');
         excludes.add(infoClassAsFile + ".class");
@@ -167,7 +167,7 @@ public class DataBindingBuilder {
         return packages;
     }
 
-    private List<String> readGeneratedClasses(File generatedClassListFile) {
+    private static List<String> readGeneratedClasses(File generatedClassListFile) {
         Preconditions.checkNotNull(generatedClassListFile,
                 "Data binding exclude generated task is not configured properly");
         Preconditions.check(generatedClassListFile.exists(),
