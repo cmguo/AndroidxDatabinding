@@ -40,8 +40,6 @@ import javax.xml.xpath.XPathExpressionException;
  * processor to work with.
  */
 public class LayoutXmlProcessor {
-    // hardcoded in baseAdapters
-    public static final String CLASS_NAME = "DataBindingInfo";
     private static final FilenameFilter LAYOUT_FOLDER_FILTER = (dir, name)
             -> name.startsWith("layout");
 
@@ -294,10 +292,6 @@ public class LayoutXmlProcessor {
         writer.writeToFile(new File(xmlOutDir, filename), layout.toXML());
     }
 
-    public String getInfoClassFullName() {
-        return mResourceBundle.getAppPackage() + "." + CLASS_NAME;
-    }
-
     /**
      * Generates a string identifier that can uniquely identify the given layout bundle.
      * This identifier can be used when we need to export data about this layout bundle.
@@ -318,20 +312,6 @@ public class LayoutXmlProcessor {
 
     public String getPackage() {
         return mResourceBundle.getAppPackage();
-    }
-
-    /**
-     * Just writes an empty class annotated with @BindingBuildInfo.
-     */
-    public void writeEmptyInfoClass(boolean useAndroidX) {
-        final Class annotation = useAndroidX
-                ? androidx.databinding.BindingBuildInfo.class
-                : android.databinding.BindingBuildInfo.class;
-        String classString = "package " + mResourceBundle.getAppPackage() + ";\n\n" +
-                "import " + annotation.getCanonicalName() + ";\n\n" +
-                "@" + annotation.getSimpleName() + "\n" +
-                "public class " + CLASS_NAME + " {}\n";
-        mFileWriter.writeToFile(mResourceBundle.getAppPackage() + "." + CLASS_NAME, classString);
     }
 
     /**
