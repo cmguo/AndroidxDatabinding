@@ -38,6 +38,17 @@ public class Scope {
     private static ThreadLocal<ScopeEntry> sScopeItems = new ThreadLocal<ScopeEntry>();
     static List<ScopedException> sDeferredExceptions = new ArrayList<ScopedException>();
 
+    /**
+     * Clears the data in static fields of this class (assigning them with new objects).
+     *
+     * This is typically needed at the end of a build, as we don't want to persist the state of this
+     * class to the next build (see bug 151860061).
+     */
+    public static void clear() {
+        sScopeItems = new ThreadLocal<>();
+        sDeferredExceptions = new ArrayList<>();
+    }
+
     public static void enter(final Location location) {
         enter(new LocationScopeProvider() {
             @Override
