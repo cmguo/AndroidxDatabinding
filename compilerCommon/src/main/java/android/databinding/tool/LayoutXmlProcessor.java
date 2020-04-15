@@ -150,6 +150,11 @@ public class LayoutXmlProcessor {
         mResourceBundle.addRemovedFile(input);
     }
 
+    /** Processes a layout file which does not contain data binding constructs. */
+    public void processFileWithNoDataBinding(@NonNull File file) {
+        mResourceBundle.addFileWithNoDataBinding(file);
+    }
+
     public boolean processSingleFile(@NonNull RelativizableFile input, @NonNull File output,
             boolean isViewBindingEnabled)
             throws ParserConfigurationException, SAXException, XPathExpressionException,
@@ -258,13 +263,26 @@ public class LayoutXmlProcessor {
     }
 
     public void writeLayoutInfoFiles(File xmlOutDir, JavaFileWriter writer) throws JAXBException {
+        // For each layout file, generate a corresponding layout info file
         for (ResourceBundle.LayoutFileBundle layout : mResourceBundle
                 .getAllLayoutFileBundlesInSource()) {
             writeXmlFile(writer, xmlOutDir, layout);
         }
-        for (File file : mResourceBundle.getRemovedFiles()) {
-            String exportFileName = generateExportFileName(file);
-            FileUtils.deleteQuietly(new File(xmlOutDir, exportFileName));
+
+        // Delete stale layout info files due to removed/changed layout files. There are 2 cases:
+        //   1. Layout files were removed
+        //   2. Layout files previously containing data binding constructs are now no longer
+        //      containing them (see bug 153711619). NOTE: This set of layout files is a subset of
+        //      mResourceBundle.getFilesWithNoDataBinding() because
+        //      mResourceBundle.getFilesWithNoDataBinding() may also contain layout files that do
+        //      not have a history or did not have data binding constructs in the previous build, in
+        //      which cases their associated layout info files don't exist.
+        List<File> staleLayoutFiles = new ArrayList<>(mResourceBundle.getRemovedFiles());
+        staleLayoutFiles.addAll(mResourceBundle.getFilesWithNoDataBinding());
+        for (File staleLayoutFile : staleLayoutFiles) {
+            File staleLayoutInfoFile = new File(xmlOutDir, generateExportFileName(staleLayoutFile));
+            // Delete quietly as the file may not exist (see comment above)
+            FileUtils.deleteQuietly(staleLayoutInfoFile);
         }
     }
 
