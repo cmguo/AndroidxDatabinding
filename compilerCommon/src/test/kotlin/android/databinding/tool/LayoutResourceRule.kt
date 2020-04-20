@@ -29,7 +29,9 @@ import java.io.File
 
 class LayoutResourceRule(
     private val appPackage: String = "com.example",
-    private val useAndroidX: Boolean = true
+    private val useAndroidX: Boolean = true,
+    private val viewBindingEnabled: Boolean = false,
+    private val dataBindingEnabled: Boolean = false
 ) : TestRule {
     private val temporaryFolder = object : TemporaryFolder() {
         override fun before() {
@@ -65,7 +67,8 @@ class LayoutResourceRule(
                 strippedFile,
                 appPackage,
                 { null },
-                true
+                viewBindingEnabled,
+                dataBindingEnabled
             )
             if (bundle != null) {
                 resourceBundle.addLayoutBundle(bundle, true)

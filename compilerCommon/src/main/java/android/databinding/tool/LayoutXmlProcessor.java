@@ -156,12 +156,12 @@ public class LayoutXmlProcessor {
     }
 
     public boolean processSingleFile(@NonNull RelativizableFile input, @NonNull File output,
-            boolean isViewBindingEnabled)
+            boolean isViewBindingEnabled, boolean isDataBindingEnabled)
             throws ParserConfigurationException, SAXException, XPathExpressionException,
             IOException {
         final ResourceBundle.LayoutFileBundle bindingLayout = LayoutFileParser
                 .parseXml(input, output, mResourceBundle.getAppPackage(), mOriginalFileLookup,
-                        isViewBindingEnabled);
+                        isViewBindingEnabled, isDataBindingEnabled);
         if (bindingLayout == null
                 || (bindingLayout.isBindingData() && bindingLayout.isEmpty())) {
             return false;
@@ -170,7 +170,8 @@ public class LayoutXmlProcessor {
         return true;
     }
 
-    public boolean processResources(final ResourceInput input, boolean isViewBindingEnabled)
+    public boolean processResources(
+            ResourceInput input, boolean isViewBindingEnabled, boolean isDataBindingEnabled)
             throws ParserConfigurationException, SAXException, XPathExpressionException,
             IOException {
         if (mProcessingComplete) {
@@ -188,7 +189,7 @@ public class LayoutXmlProcessor {
                     throws ParserConfigurationException, SAXException, XPathExpressionException,
                     IOException {
                 processSingleFile(RelativizableFile.fromAbsoluteFile(file, null),
-                        convertToOutFile(file), isViewBindingEnabled);
+                        convertToOutFile(file), isViewBindingEnabled, isDataBindingEnabled);
             }
 
             @Override

@@ -74,7 +74,7 @@ public final class LayoutFileParser {
     public static ResourceBundle.LayoutFileBundle parseXml(@NonNull final RelativizableFile input,
             @NonNull final File outputFile, @NonNull final String pkg,
             @NonNull final LayoutXmlProcessor.OriginalFileLookup originalFileLookup,
-            boolean isViewBindingEnabled)
+            boolean isViewBindingEnabled, boolean isDataBindingEnabled)
             throws ParserConfigurationException, IOException, SAXException,
             XPathExpressionException {
         File inputFile = input.getAbsoluteFile();
@@ -95,7 +95,7 @@ public final class LayoutFileParser {
             stripFile(inputFile, outputFile, encoding, originalFileLookup);
             return parseOriginalXml(
                 RelativizableFile.fromAbsoluteFile(originalFile, input.getBaseDir()),
-                pkg, encoding, isViewBindingEnabled);
+                pkg, encoding, isViewBindingEnabled, isDataBindingEnabled);
         } finally {
             Scope.exit();
         }
@@ -116,7 +116,8 @@ public final class LayoutFileParser {
 
     private static ResourceBundle.LayoutFileBundle parseOriginalXml(
             @NonNull final RelativizableFile originalFile, @NonNull final String pkg,
-            @NonNull final String encoding, boolean isViewBindingEnabled)
+            @NonNull final String encoding, boolean isViewBindingEnabled,
+            boolean isDataBindingEnabled)
             throws IOException {
         File original = originalFile.getAbsoluteFile();
         try {
@@ -140,6 +141,10 @@ public final class LayoutFileParser {
             XMLParser.ElementContext data;
             XMLParser.ElementContext rootView;
             if (isBindingData) {
+                if (!isDataBindingEnabled) {
+                    L.e(ErrorMessages.FOUND_LAYOUT_BUT_NOT_ENABLED);
+                    return null;
+                }
                 data = getDataNode(root);
                 rootView = getViewNode(original, root);
             } else if (isViewBindingEnabled) {

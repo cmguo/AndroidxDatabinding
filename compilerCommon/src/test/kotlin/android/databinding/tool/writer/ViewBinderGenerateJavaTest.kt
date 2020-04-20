@@ -18,13 +18,15 @@ package android.databinding.tool.writer
 
 import android.databinding.tool.LayoutResourceRule
 import android.databinding.tool.assert
+import android.databinding.tool.processing.ErrorMessages.FOUND_LAYOUT_BUT_NOT_ENABLED
+import android.databinding.tool.processing.ScopedException
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 
 class ViewBinderGenerateJavaTest {
-    @get:Rule val layouts = LayoutResourceRule()
+    @get:Rule val layouts = LayoutResourceRule(viewBindingEnabled = true)
 
     @Test fun nullableFieldsJavadocTheirConfigurations() {
         layouts.write("example", "layout", """
@@ -718,6 +720,21 @@ class ViewBinderGenerateJavaTest {
         val mergeWithId = layouts.parse().getValue("merge_with_id")
         mergeWithId.toViewBinder().toJavaFile().assert {
             doesNotContain("mainContent")
+        }
+    }
+
+    @Test fun layoutXmlWhenViewBindingFails() {
+        layouts.write("example", "layout", """
+            <layout xmlns:android="http://schemas.android.com/apk/res/android">
+                <TextView/>
+            </layout>
+        """.trimIndent())
+
+        try {
+            layouts.parse()
+            fail()
+        } catch (e: ScopedException) {
+            assertThat(e).hasMessageThat().contains(FOUND_LAYOUT_BUT_NOT_ENABLED)
         }
     }
 }
