@@ -111,7 +111,10 @@ fun BaseLayoutModel.toViewBinder(): ViewBinder {
         )
     }
 
-    val bindings = sortedTargets.filter { it.id != null }.map { it.toBinding() }
+    val bindings = sortedTargets
+        .filter { it.id != null }
+        .filter { it.viewName != "merge" } // <merge> can have ID but it's ignored at runtime.
+        .map { it.toBinding() }
     val rootNode = parseRootNode(rClassName, bindings)
     return ViewBinder(
         generatedTypeName = ClassName.get(bindingClassPackage, bindingClassName),

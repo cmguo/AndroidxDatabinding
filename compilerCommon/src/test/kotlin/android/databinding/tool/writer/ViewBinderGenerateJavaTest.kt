@@ -700,4 +700,24 @@ class ViewBinderGenerateJavaTest {
             doesNotContain("two")
         }
     }
+
+    @Test fun mergeWithIdAndInclude() {
+        // https://issuetracker.google.com/154747638
+        // Note: This bug only manifests when there's a nested <include> the <merge>.
+
+        layouts.write("simple", "layout", "<View/>")
+        layouts.write("merge_with_id", "layout", """
+            <merge
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/main_content"
+                >
+                <include layout="@layout/simple"/>
+            </merge>
+        """.trimIndent())
+
+        val mergeWithId = layouts.parse().getValue("merge_with_id")
+        mergeWithId.toViewBinder().toJavaFile().assert {
+            doesNotContain("mainContent")
+        }
+    }
 }
