@@ -27,6 +27,10 @@ class ParseXmlResourceReferenceTest {
             "@id/foo".parseXmlResourceReference()
         )
         assertEquals(
+            XmlResourceReference(null, "id", "foo_bar", false),
+            "@id/foo.bar".parseXmlResourceReference()
+        )
+        assertEquals(
             XmlResourceReference(null, "id", "foo", true),
             "@+id/foo".parseXmlResourceReference()
         )
