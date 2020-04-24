@@ -246,7 +246,8 @@ private class JavaFileGenerator(
         /** Non-null when error-handling is being generated. */
         val id: String?
 
-        if (nonRootBindings.any { it.isRequired }) {
+        val hasRequiredBindings = nonRootBindings.any { it.isRequired }
+        if (hasRequiredBindings) {
             addComment("The body of this method is generated in a way you would not otherwise write.")
             addComment("This is done to optimize the compiled bytecode for size and performance.")
 
@@ -274,8 +275,11 @@ private class JavaFileGenerator(
             val viewInitializer = if (binding === rootBinding) {
                 // If this corresponds to the root binding, we can re-use the input View argument.
                 rootParam.asViewReference(viewType)
-            } else if (binding.isRequired) {
+            } else if (hasRequiredBindings) {
                 // Place the id value first into the local in case it's needed for error handling.
+                // We do this unconditionally (even for optional bindings) so that the Dalvik
+                // bytecode re-uses the same register rather than using one for optional IDs and
+                // one for required IDs.
                 addStatement("$id = $L", binding.id.asCode())
                 CodeBlock.of("$N.findViewById($id)", rootParam)
             } else {
