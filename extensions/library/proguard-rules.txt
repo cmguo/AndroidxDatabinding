@@ -1,2 +1,2 @@
--dontwarn android.databinding.ViewDataBinding
--dontwarn android.databinding.ViewDataBinding$LiveDataListener
+-dontwarn androidx.databinding.ViewDataBinding
+-dontwarn androidx.databinding.ViewDataBinding$LiveDataListener
