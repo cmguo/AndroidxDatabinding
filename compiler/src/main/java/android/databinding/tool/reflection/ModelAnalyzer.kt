@@ -60,6 +60,14 @@ abstract class ModelAnalyzer protected constructor(@JvmField val libTypes: LibTy
                 " report", libTypes.viewDataBinding)
         klass
     }
+    val viewBindingType by lazy(LazyThreadSafetyMode.NONE) {
+        val klass = findClass(libTypes.viewBinding, null)
+        Preconditions.checkNotNull(klass, "Cannot find %s class." +
+          "Something is wrong in the classpath,  please submit a bug" +
+          " report", libTypes.viewBinding)
+        klass
+    }
+
     val viewStubType  by lazy(LazyThreadSafetyMode.NONE) {
         findClass(VIEW_STUB_CLASS_NAME, null)
     }

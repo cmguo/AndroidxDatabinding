@@ -159,6 +159,13 @@ abstract class ModelClass {
     }
 
     /**
+     * @return whether or not this is a ViewBinding subclass.
+     */
+    val isViewBinding by lazy(LazyThreadSafetyMode.NONE) {
+        ModelAnalyzer.getInstance().viewBindingType!!.isAssignableFrom(this)
+    }
+
+    /**
      * @return whether or not this is an Observable type such as ObservableMap, ObservableList,
      * or Observable.
      */

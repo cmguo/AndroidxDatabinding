@@ -17,10 +17,12 @@ build/kotlin-build/caches/version.txt
 # the gradle files below are generated locally, never commit
 integration-tests/*/build
 integration-tests/*/gradlew
+integration-tests/*/gradlew.bat
 integration-tests/*/gradle
 integration-tests-support/*/gradle
 integration-tests-support/*/build
 integration-tests-support/*/gradlew
+integration-tests-support/*/gradlew.bat
 extensions/gradle
 extensions/gradlew
 extensions-support/gradle

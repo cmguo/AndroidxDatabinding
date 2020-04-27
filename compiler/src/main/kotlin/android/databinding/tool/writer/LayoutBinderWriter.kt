@@ -132,6 +132,16 @@ fun BindingTarget.superConversion(variable : String) : String {
     return if (resolvedType != null && resolvedType.extendsViewStub) {
         val libTypes = ModelAnalyzer.getInstance().libTypes
         "new ${libTypes.viewStubProxy}((android.view.ViewStub) $variable)"
+    } else if(resolvedType != null && !resolvedType.isViewDataBinding && resolvedType.isViewBinding) {
+        // For included layouts, DataBinding used to rely on view tags we attach at compile time.
+        // For ViewBinding layouts, there is no such tag also no global inflate method
+        // (like DataBindingUtil.inflate). To workaround that issue, for <include> layouts with
+        // ViewBinding (no data binding), we find them as views and then bind here.
+        // see b/150397979 for details
+        "($variable != null) ? " +
+          "${resolvedType.toJavaCode()}.bind((android.view.View) $variable) " +
+          ": null"
+
     } else {
         "($interfaceClass) $variable"
     }
@@ -171,6 +181,10 @@ val BindingTarget.interfaceClass by lazyProp { target: BindingTarget ->
 val BindingTarget.constructorParamName by lazyProp { target: BindingTarget ->
     target.model.getConstructorParamName(target.readableName)
 }
+
+val BindingTarget.isDataBindingLayout:Boolean
+  get() = isBinder && resolvedType.isViewDataBinding
+
 
 // not necessarily unique. Uniqueness is decided per scope
 val Expr.readableName by lazyProp { expr: Expr ->
@@ -332,7 +346,7 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
     val baseClassName = "${layoutBinder.className}"
 
     val includedBinders by lazy {
-        layoutBinder.bindingTargets.filter { it.isBinder }
+        layoutBinder.bindingTargets.filter { it.isDataBindingLayout }
     }
 
     val variables by lazy {
@@ -414,7 +428,7 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
 
     fun calculateIndices() {
         val taggedViews = layoutBinder.bindingTargets.filter {
-            it.isUsed && it.tag != null && !it.isBinder
+            it.isUsed && it.tag != null && !it.isDataBindingLayout
         }
         taggedViews.filter {
             it.includedLayout == null
@@ -441,14 +455,14 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
         nl("@Nullable")
         nl("private static final android.util.SparseIntArray sViewsWithIds;")
         nl("static {") {
-            val hasBinders = layoutBinder.bindingTargets.firstOrNull { it.isUsed && it.isBinder } != null
+            val hasBinders = layoutBinder.bindingTargets.any { it.isUsed && it.isDataBindingLayout }
             if (!hasBinders) {
                 tab("sIncludes = null;")
             } else {
                 val numBindings = layoutBinder.bindingTargets.filter { it.isUsed }.count()
                 tab("sIncludes = new ${libTypes.viewDataBinding}.IncludedLayouts($numBindings);")
                 val includeMap = HashMap<BindingTarget, ArrayList<BindingTarget>>()
-                layoutBinder.bindingTargets.filter { it.isUsed && it.isBinder }.forEach {
+                layoutBinder.bindingTargets.filter { it.isUsed && it.isDataBindingLayout }.forEach {
                     val includeTag = it.tag
                     val parent = layoutBinder.bindingTargets.firstOrNull {
                         it.isUsed && !it.isBinder && includeTag.equals(it.tag)
@@ -486,7 +500,7 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
                 }
             }
             val viewsWithIds = layoutBinder.bindingTargets.filter {
-                it.isUsed && !it.isBinder && (!it.supportsTag() || (it.id != null && (it.tag == null || it.includedLayout != null)))
+                it.isUsed && !it.isDataBindingLayout && (!it.supportsTag() || (it.id != null && (it.tag == null || it.includedLayout != null)))
             }
             if (viewsWithIds.isEmpty()) {
                 tab("sViewsWithIds = null;")
@@ -548,9 +562,6 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
         taggedViews.forEach {
             if (!hasBaseBinder || it.id == null) {
                 tab("this.${it.fieldName} = ${fieldConversion(it)};")
-                if (it.isBinder) {
-                    tab("setContainedBinding(this.${it.fieldName});")
-                }
             }
             if (!it.isBinder) {
                 if (it.resolvedType != null && it.resolvedType.extendsViewStub) {
@@ -579,6 +590,9 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
                         it.originalTag != null) {
                     L.e(ErrorMessages.ROOT_TAG_NOT_SUPPORTED, it.originalTag)
                 }
+            }
+            if (it.isDataBindingLayout) {
+                tab("setContainedBinding(this.${it.fieldName});")
             }
         }
         tab("setRootTag(root);")
@@ -1319,7 +1333,7 @@ class LayoutBinderWriter(val layoutBinder : LayoutBinder, val libTypes: LibTypes
                     tab("super(bindingComponent, root_, localFieldCount);")
                     layoutBinder.sortedTargets.filter{it.id != null}.forEach {
                         tab("this.${it.fieldName} = ${it.constructorParamName};")
-                        if (it.isBinder) {
+                        if (it.isDataBindingLayout) {
                             tab("setContainedBinding(this.${it.fieldName});")
                         }
                     }
