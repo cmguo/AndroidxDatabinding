@@ -296,6 +296,10 @@ public class BaseCompilationTest {
         args.add("-P" + PRINT_ENCODED_ERRORS_PROPERTY + "=true");;
         args.add("-P" + USE_ANDROID_X_PROPERTY + "=true");
         args.add("--no-daemon");
+        // Temporarily limit the number of workers to reduce the chance that the Gradle build
+        // process hangs (bug 148496072).
+        // TODO(148496072): Remove this once the bug is fixed.
+        args.add("--max-workers=4");
         if ("true".equals(System.getProperties().getProperty("useReleaseVersion", "false"))) {
             args.add("-PuseReleaseVersion=true");
         }
