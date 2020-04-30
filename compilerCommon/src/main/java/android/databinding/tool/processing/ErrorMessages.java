@@ -23,6 +23,11 @@ public class ErrorMessages {
     public static final String INCLUDE_INSIDE_MERGE =
             "<include> elements are not supported as direct children of <merge> elements";
 
+    public static final String FOUND_LAYOUT_BUT_NOT_ENABLED =
+            "Found <layout> but data binding is not enabled.\n" +
+            "\n" +
+            "Add buildFeatures.dataBinding = true to your build.gradle to enable it.";
+
     public static final String UNDEFINED_VARIABLE =
             "Could not find identifier '%s'\n" +
             "\n" +

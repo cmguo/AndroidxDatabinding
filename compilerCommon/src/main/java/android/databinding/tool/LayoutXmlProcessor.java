@@ -40,8 +40,6 @@ import javax.xml.xpath.XPathExpressionException;
  * processor to work with.
  */
 public class LayoutXmlProcessor {
-    // hardcoded in baseAdapters
-    public static final String CLASS_NAME = "DataBindingInfo";
     private static final FilenameFilter LAYOUT_FOLDER_FILTER = (dir, name)
             -> name.startsWith("layout");
 
@@ -150,13 +148,18 @@ public class LayoutXmlProcessor {
         mResourceBundle.addRemovedFile(input);
     }
 
+    /** Processes a layout file which does not contain data binding constructs. */
+    public void processFileWithNoDataBinding(@NonNull File file) {
+        mResourceBundle.addFileWithNoDataBinding(file);
+    }
+
     public boolean processSingleFile(@NonNull RelativizableFile input, @NonNull File output,
-            boolean isViewBindingEnabled)
+            boolean isViewBindingEnabled, boolean isDataBindingEnabled)
             throws ParserConfigurationException, SAXException, XPathExpressionException,
             IOException {
         final ResourceBundle.LayoutFileBundle bindingLayout = LayoutFileParser
                 .parseXml(input, output, mResourceBundle.getAppPackage(), mOriginalFileLookup,
-                        isViewBindingEnabled);
+                        isViewBindingEnabled, isDataBindingEnabled);
         if (bindingLayout == null
                 || (bindingLayout.isBindingData() && bindingLayout.isEmpty())) {
             return false;
@@ -165,7 +168,8 @@ public class LayoutXmlProcessor {
         return true;
     }
 
-    public boolean processResources(final ResourceInput input, boolean isViewBindingEnabled)
+    public boolean processResources(
+            ResourceInput input, boolean isViewBindingEnabled, boolean isDataBindingEnabled)
             throws ParserConfigurationException, SAXException, XPathExpressionException,
             IOException {
         if (mProcessingComplete) {
@@ -183,7 +187,7 @@ public class LayoutXmlProcessor {
                     throws ParserConfigurationException, SAXException, XPathExpressionException,
                     IOException {
                 processSingleFile(RelativizableFile.fromAbsoluteFile(file, null),
-                        convertToOutFile(file), isViewBindingEnabled);
+                        convertToOutFile(file), isViewBindingEnabled, isDataBindingEnabled);
             }
 
             @Override
@@ -258,13 +262,26 @@ public class LayoutXmlProcessor {
     }
 
     public void writeLayoutInfoFiles(File xmlOutDir, JavaFileWriter writer) throws JAXBException {
+        // For each layout file, generate a corresponding layout info file
         for (ResourceBundle.LayoutFileBundle layout : mResourceBundle
                 .getAllLayoutFileBundlesInSource()) {
             writeXmlFile(writer, xmlOutDir, layout);
         }
-        for (File file : mResourceBundle.getRemovedFiles()) {
-            String exportFileName = generateExportFileName(file);
-            FileUtils.deleteQuietly(new File(xmlOutDir, exportFileName));
+
+        // Delete stale layout info files due to removed/changed layout files. There are 2 cases:
+        //   1. Layout files were removed
+        //   2. Layout files previously containing data binding constructs are now no longer
+        //      containing them (see bug 153711619). NOTE: This set of layout files is a subset of
+        //      mResourceBundle.getFilesWithNoDataBinding() because
+        //      mResourceBundle.getFilesWithNoDataBinding() may also contain layout files that do
+        //      not have a history or did not have data binding constructs in the previous build, in
+        //      which cases their associated layout info files don't exist.
+        List<File> staleLayoutFiles = new ArrayList<>(mResourceBundle.getRemovedFiles());
+        staleLayoutFiles.addAll(mResourceBundle.getFilesWithNoDataBinding());
+        for (File staleLayoutFile : staleLayoutFiles) {
+            File staleLayoutInfoFile = new File(xmlOutDir, generateExportFileName(staleLayoutFile));
+            // Delete quietly as the file may not exist (see comment above)
+            FileUtils.deleteQuietly(staleLayoutInfoFile);
         }
     }
 
@@ -273,10 +290,6 @@ public class LayoutXmlProcessor {
             throws JAXBException {
         String filename = generateExportFileName(layout);
         writer.writeToFile(new File(xmlOutDir, filename), layout.toXML());
-    }
-
-    public String getInfoClassFullName() {
-        return mResourceBundle.getAppPackage() + "." + CLASS_NAME;
     }
 
     /**
@@ -299,20 +312,6 @@ public class LayoutXmlProcessor {
 
     public String getPackage() {
         return mResourceBundle.getAppPackage();
-    }
-
-    /**
-     * Just writes an empty class annotated with @BindingBuildInfo.
-     */
-    public void writeEmptyInfoClass(boolean useAndroidX) {
-        final Class annotation = useAndroidX
-                ? androidx.databinding.BindingBuildInfo.class
-                : android.databinding.BindingBuildInfo.class;
-        String classString = "package " + mResourceBundle.getAppPackage() + ";\n\n" +
-                "import " + annotation.getCanonicalName() + ";\n\n" +
-                "@" + annotation.getSimpleName() + "\n" +
-                "public class " + CLASS_NAME + " {}\n";
-        mFileWriter.writeToFile(mResourceBundle.getAppPackage() + "." + CLASS_NAME, classString);
     }
 
     /**

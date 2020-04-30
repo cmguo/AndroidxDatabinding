@@ -351,7 +351,8 @@ class LayoutInfoInputTest {
                         artifactFolder = artifactFolder,
                         packageName = "foo.bar.baz",
                         useAndroidX = true,
-                        enableViewBinding = false)
+                        enableViewBinding = false,
+                        enableDataBinding = true)
         )
     }
 }

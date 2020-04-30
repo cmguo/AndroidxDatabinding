@@ -142,7 +142,7 @@ fun String.parseXmlResourceReference(): XmlResourceReference {
     require(name.isNotEmpty()) { "Name cannot be empty: $this" }
     require(type.isNotEmpty()) { "Type cannot be empty: $this" }
 
-    return XmlResourceReference(namespace, type, name, creating)
+    return XmlResourceReference(namespace, type, name.replace('.', '_'), creating)
 }
 
 data class XmlResourceReference(

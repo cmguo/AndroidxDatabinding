@@ -23,23 +23,29 @@ import org.junit.Rule
 import org.junit.Test
 
 class BaseLayoutBinderWriterTest {
-    @get:Rule val layouts = LayoutResourceRule()
+    @get:Rule val layouts = LayoutResourceRule(dataBindingEnabled = true)
 
     @Test fun nullableFieldsJavadocTheirConfigurations() {
         layouts.write("example", "layout", """
-            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
-                <TextView android:id="@+id/name" />
-            </LinearLayout>
+            <layout xmlns:android="http://schemas.android.com/apk/res/android">
+                <LinearLayout>
+                    <TextView android:id="@+id/name" />
+                </LinearLayout>
+            </layout>
             """.trimIndent())
 
         layouts.write("example", "layout-sw600dp", """
-            <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android">
-                <TextView android:id="@+id/name" />
-            </LinearLayout>
+            <layout xmlns:android="http://schemas.android.com/apk/res/android">
+                <LinearLayout>
+                    <TextView android:id="@+id/name" />
+                </LinearLayout>
+            </layout>
             """.trimIndent())
 
         layouts.write("example", "layout-land", """
-            <LinearLayout />
+            <layout xmlns:android="http://schemas.android.com/apk/res/android">
+                <LinearLayout/>
+            </layout>
             """.trimIndent())
 
         val model = layouts.parse().getValue("example")

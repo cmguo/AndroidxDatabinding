@@ -17,6 +17,15 @@
 package androidx.databinding.compilationTest;
 
 import android.databinding.tool.processing.ScopedErrorReport;
+import com.google.common.util.concurrent.SimpleTimeLimiter;
+import com.google.common.util.concurrent.TimeLimiter;
+import java.time.Duration;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import kotlin.Pair;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.filefilter.IOFileFilter;
@@ -75,6 +84,12 @@ public class BaseCompilationTest {
     public static final String KEY_IMPORT_TYPE = "IMPORTTYPE";
     public static final String KEY_INCLUDE_ID = "INCLUDEID";
     public static final String KEY_VIEW_ID = "VIEWID";
+
+    /**
+     * Maximum time allowed when reading the output stream, error stream, and waiting for
+     * completion of the launched Gradle build process.
+     */
+    @NonNull private static final Duration GRADLE_BUILD_TIMEOUT = Duration.ofMinutes(5);
 
     @Rule
     public TemporaryBuildFolder tmpBuildFolder =
@@ -299,10 +314,15 @@ public class BaseCompilationTest {
         // builder.environment().put("GRADLE_OPTS", "-Xdebug -Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=5006");
         builder.directory(testFolder);
         Process process = builder.start();
-        String output = collect(process.getInputStream());
-        String error = collect(process.getErrorStream());
-        int result = process.waitFor();
-        return new CompilationResult(result, output, error);
+        Pair<Boolean, String> outputInfo =
+            readInputStreamWithTimeout(process.getInputStream(), GRADLE_BUILD_TIMEOUT);
+        Pair<Boolean, String> errorInfo =
+            readInputStreamWithTimeout(process.getErrorStream(), GRADLE_BUILD_TIMEOUT);
+        boolean executionInfo =
+            process.waitFor(GRADLE_BUILD_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS);
+        ensureProcessCompleted(process, outputInfo, errorInfo, executionInfo, GRADLE_BUILD_TIMEOUT);
+        return new CompilationResult(
+            process.exitValue(), outputInfo.getSecond(), errorInfo.getSecond());
     }
 
     private void copyGradle(File outFolder) throws IOException {
@@ -385,15 +405,109 @@ public class BaseCompilationTest {
     }
 
     /**
-     * Use this instead of IO utils so that we can easily log the output when necessary
+     * Checks whether the given process has completed.
+     *
+     * If the process timed out, this method will
+     *   - destroy the process (see bug 148598093)
+     *   - throw a runtime exception containing the output and error logs from the process so far
+     *     for debugging (see bug 148496072).
+     *
+     * @param process the process to check
+     * @param outputInfo the result of reading the process's output (see readInputStreamWithTimeout)
+     * @param errorInfo the result of reading the process's error (see readInputStreamWithTimeout)
+     * @param executionInfo the result of calling Process.waitFor() on the process
+     * @param timeout the timeout used when obtaining outputInfo, errorInfo, and executionInfo
      */
-    private static String collect(InputStream stream) throws IOException {
-        StringBuilder sb = new StringBuilder();
-        String line;
-        final BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
-        while ((line = reader.readLine()) != null) {
-            sb.append(line).append("\n");
+    @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
+    private void ensureProcessCompleted(
+            @NonNull Process process,
+            @NonNull Pair<Boolean, String> outputInfo,
+            @NonNull Pair<Boolean, String> errorInfo,
+            boolean executionInfo,
+            @SuppressWarnings("SameParameterValue") @NonNull Duration timeout) {
+        boolean processCompleted = outputInfo.getFirst() && errorInfo.getFirst() && executionInfo;
+        if (!processCompleted) {
+            process.destroyForcibly();
+            StringBuilder message = new StringBuilder();
+            if (!outputInfo.getFirst()) {
+                message.append("Timeout (" + timeout.getSeconds() + "s) when reading output logs.\n");
+            }
+            if (!errorInfo.getFirst()) {
+                message.append("Timeout (" + timeout.getSeconds() + "s) when reading error logs.\n");
+            }
+            if (!executionInfo) {
+                message.append("Timeout (" + timeout.getSeconds() + "s) when waiting for process to complete.\n");
+            }
+            if (outputInfo.getSecond().isEmpty()) {
+                message.append("Output logs: (empty)\n");
+            } else {
+                message.append("Output logs:\n" + outputInfo.getSecond() + "\n");
+            }
+            if (errorInfo.getSecond().isEmpty()) {
+                message.append("Error logs: (empty)\n");
+            } else {
+                message.append("Error logs:\n" + errorInfo.getSecond() + "\n");
+            }
+            throw new RuntimeException(message.toString());
         }
-        return sb.toString();
+    }
+
+    /**
+     * Reads the input stream and stores the result in the given StringBuilder. This is so that if
+     * this method times out, the caller may still be able to get the result so far, see
+     * readInputStreamWithTimeout method.
+     */
+    private static void readInputStream(
+            @NonNull InputStream inputStream, @NonNull StringBuilder result) throws IOException {
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                // Synchronize result as it may be read from another thread, see
+                // readInputStreamWithTimeout method
+                //noinspection SynchronizationOnLocalVariableOrMethodParameter
+                synchronized (result) {
+                    result.append(line).append("\n");
+                }
+            }
+        }
+    }
+
+    /**
+     * Reads the input stream with a timeout.
+     *
+     * @return a pair of value. The first value is `true` if reading was successful (did not time
+     *     out). The second value is what has been read so far (could be incomplete if it timed
+     *     out).
+     */
+    @NonNull
+    private static Pair<Boolean, String> readInputStreamWithTimeout(
+            @NonNull InputStream inputStream,
+            @SuppressWarnings("SameParameterValue") @NonNull Duration timeout) {
+        StringBuilder result = new StringBuilder();
+        Callable<Void> callable = () -> {
+            readInputStream(inputStream, result);
+            return null;
+        };
+        @SuppressWarnings("UnstableApiUsage")
+        TimeLimiter timeLimiter = SimpleTimeLimiter.create(Executors.newSingleThreadExecutor());
+        try {
+            timeLimiter.callWithTimeout(callable, timeout.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            // The launched thread that does the actual reading of the input stream should have been
+            // cancelled with InterruptedException by the TimeLimiter, so no need to clean it up
+            // here.
+            // Synchronize result as the launched thread may still be running for a bit longer and
+            // writing to the result after this thread sent the cancellation signal (see
+            // readInputStream method).
+            synchronized (result) {
+                return new Pair<>(false, result.toString());
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException(e);
+        }
+        // Synchronize result, see above comment
+        synchronized (result) {
+            return new Pair<>(true, result.toString());
+        }
     }
 }

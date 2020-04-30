@@ -125,19 +125,23 @@ public class DataBindingBuilder {
     /**
      * Returns the list of classes that should be excluded from the packaging task.
      *
-     * @param layoutXmlProcessor The LayoutXmlProcessor for this variant
+     * @param packageName The package name
+     * @param className the name of the trigger class
      * @param generatedClassListFile The location of the File into which data binding compiler wrote
      *                               list of generated classes
      * @param dataBindingCompilerBuildFolder the build folder for the data binding compiler
      * @return The list of classes to exclude. They are already in JNI format.
      */
-    public static List<String> getJarExcludeList(LayoutXmlProcessor layoutXmlProcessor,
-                                                 File generatedClassListFile, File dataBindingCompilerBuildFolder) {
+    public static List<String> getJarExcludeList(
+            String packageName,
+            String className,
+            File generatedClassListFile,
+            File dataBindingCompilerBuildFolder) {
         List<String> excludes = new ArrayList<>();
-        String infoClassAsFile = layoutXmlProcessor.getInfoClassFullName().replace('.', '/');
-        excludes.add(infoClassAsFile + ".class");
+        String triggerClassAsFile = (packageName + "." + className).replace('.', '/');
+        excludes.add(triggerClassAsFile + ".class");
         excludes.addAll(EXCLUDE_PATTERNS);
-        excludes.add(layoutXmlProcessor.getPackage().replace('.', '/') + "/BR.*");
+        excludes.add(packageName.replace('.', '/') + "/BR.*");
         for (String pkg : getBRFilePackages(dataBindingCompilerBuildFolder)) {
             excludes.add(pkg.replace('.', '/') + "/BR.*");
         }

@@ -18,13 +18,15 @@ package android.databinding.tool.writer
 
 import android.databinding.tool.LayoutResourceRule
 import android.databinding.tool.assert
+import android.databinding.tool.processing.ErrorMessages.FOUND_LAYOUT_BUT_NOT_ENABLED
+import android.databinding.tool.processing.ScopedException
 import com.google.common.truth.Truth.assertThat
 import org.junit.Assert.fail
 import org.junit.Rule
 import org.junit.Test
 
 class ViewBinderGenerateJavaTest {
-    @get:Rule val layouts = LayoutResourceRule()
+    @get:Rule val layouts = LayoutResourceRule(viewBindingEnabled = true)
 
     @Test fun nullableFieldsJavadocTheirConfigurations() {
         layouts.write("example", "layout", """
@@ -698,6 +700,41 @@ class ViewBinderGenerateJavaTest {
         fragmentAsChildModel.toViewBinder().toJavaFile().assert {
             contains("one")
             doesNotContain("two")
+        }
+    }
+
+    @Test fun mergeWithIdAndInclude() {
+        // https://issuetracker.google.com/154747638
+        // Note: This bug only manifests when there's a nested <include> the <merge>.
+
+        layouts.write("simple", "layout", "<View/>")
+        layouts.write("merge_with_id", "layout", """
+            <merge
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                android:id="@+id/main_content"
+                >
+                <include layout="@layout/simple"/>
+            </merge>
+        """.trimIndent())
+
+        val mergeWithId = layouts.parse().getValue("merge_with_id")
+        mergeWithId.toViewBinder().toJavaFile().assert {
+            doesNotContain("mainContent")
+        }
+    }
+
+    @Test fun layoutXmlWhenViewBindingFails() {
+        layouts.write("example", "layout", """
+            <layout xmlns:android="http://schemas.android.com/apk/res/android">
+                <TextView/>
+            </layout>
+        """.trimIndent())
+
+        try {
+            layouts.parse()
+            fail()
+        } catch (e: ScopedException) {
+            assertThat(e).hasMessageThat().contains(FOUND_LAYOUT_BUT_NOT_ENABLED)
         }
     }
 }

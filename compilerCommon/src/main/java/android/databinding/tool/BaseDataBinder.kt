@@ -66,6 +66,10 @@ class BaseDataBinder(val input : LayoutInfoInput) {
             val javaFile: JavaFile
             val classInfo: GenClassInfoLog.GenClass
             if (variations.first().isBindingData) {
+                check(input.args.enableDataBinding) {
+                    "Data binding is not enabled but found data binding layouts: $variations"
+                }
+
                 val binderWriter = BaseLayoutBinderWriter(layoutModel, libTypes)
                 javaFile = binderWriter.write()
                 classInfo = binderWriter.generateClassInfo()

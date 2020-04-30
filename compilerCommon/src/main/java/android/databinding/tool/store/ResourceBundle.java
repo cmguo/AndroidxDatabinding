@@ -92,7 +92,23 @@ public class ResourceBundle implements Serializable {
 
     private Map<String, IncludedLayout> mDependencyBinders = new HashMap<>();
 
-    private List<File> mRemovedFiles = new ArrayList<File>();
+    /**
+     * Layout files that were removed. We track these files to delete stale layout info files that
+     * data binding generated in the previous build.
+     */
+    @NonNull private List<File> mRemovedFiles = new ArrayList<File>();
+
+    /**
+     * Layout files that exist in the current build but do not contain data binding constructs.
+     * These include:
+     *   1. Layout files that previously contained data binding constructs but are now no longer
+     *      containing them. We track these files to delete stale layout info files that data
+     *      binding generated in the previous build (see bug 153711619).
+     *   2. Layout files that do not have a history or did not have data binding constructs in the
+     *      previous build. We don't really need to track these files as there are no corresponding
+     *      stale layout info files to delete, but it's easier (and okay) to leave them here.
+     */
+    @NonNull private List<File> mFileWithNoDataBinding = new ArrayList<>();
 
     private final String viewDataBindingClass;
 
@@ -547,6 +563,15 @@ public class ResourceBundle implements Serializable {
 
     public List<File> getRemovedFiles() {
         return mRemovedFiles;
+    }
+
+    public void addFileWithNoDataBinding(@NonNull File file) {
+        mFileWithNoDataBinding.add(file);
+    }
+
+    @NonNull
+    public List<File> getFilesWithNoDataBinding() {
+        return new ArrayList<>(mFileWithNoDataBinding);
     }
 
     @XmlAccessorType(XmlAccessType.NONE)
