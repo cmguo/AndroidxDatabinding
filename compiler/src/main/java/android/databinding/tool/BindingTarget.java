@@ -123,6 +123,10 @@ public class BindingTarget implements LocationScopeProvider {
         return mBundle.getModulePackage();
     }
 
+    /**
+     * This will return true for both DataBinding and ViewBinding targets. Check the resolved type
+     * if you need to distinguish between the two.
+     */
     public boolean isBinder() {
         return mBundle.isBinder();
     }

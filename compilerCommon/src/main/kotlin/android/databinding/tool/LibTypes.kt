@@ -86,6 +86,11 @@ class LibTypes(val useAndroidX: Boolean) {
         convert("android.databinding.ViewDataBinding")
     }
 
+    val viewBinding by lazy(LazyThreadSafetyMode.NONE) {
+        convert("android.viewbinding.ViewBinding")
+    }
+
+
     val listClassNames by lazy(LazyThreadSafetyMode.NONE) {
         arrayOf("java.util.List",
                 "android.util.SparseArray",
@@ -196,6 +201,7 @@ class LibTypes(val useAndroidX: Boolean) {
         // needed until we can update jettifier w/ arch and data binding
         private val PREFIX_REPLACEMENTS = mapOf(
                 "android.databinding." to "androidx.databinding.",
+                "android.viewbinding." to "androidx.viewbinding.",
                 "android.arch.lifecycle." to "androidx.lifecycle.",
                 "android.arch.core." to "androidx.arch.core.",
                 "android.arch.core.executor." to "androidx.executor.",

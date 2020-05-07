@@ -208,9 +208,6 @@ class BaseLayoutBinderWriter(val model: BaseLayoutModel, val libTypes: LibTypes)
             // todo might change if we start de-duping constructor params
             val fieldName = model.fieldName(it)
             addStatement("this.$1L = $1L", fieldName)
-            if (it.isBinder) {
-                addStatement("setContainedBinding(this.$L)", fieldName)
-            }
         }
     }
 
