@@ -354,6 +354,7 @@ gradle_build(
             "extensions/gradlew.bat",
         ],
     ),
+    max_workers = 1,  # b/155772061
     output_file = "data_binding_runtime_androidx.zip",
     output_file_source = "local_repo_zip/dataBindingRuntimeRepo.zip",
     repos = [
@@ -385,6 +386,7 @@ gradle_build(
             "extensions-support/gradlew.bat",
         ],
     ),
+    max_workers = 1,  # b/155772061
     output_file = "data_binding_runtime_support.zip",
     output_file_source = "local_repo_zip/dataBindingRuntimeRepo.zip",
     repos = [
