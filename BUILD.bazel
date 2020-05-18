@@ -360,6 +360,7 @@ gradle_build(
         "//tools/base/build-system:gradle_plugin_repo.zip",
         ":external_deps.zip",
     ],
+    tags = ["no_mac"],
     tasks = ["createArchive"],
 )
 
@@ -391,6 +392,7 @@ gradle_build(
         "//tools/base/build-system:gradle_plugin_repo.zip",
         ":external_deps.zip",
     ],
+    tags = ["no_mac"],
     tasks = ["createArchive"],
 )
 
@@ -425,5 +427,6 @@ merge_jars(
         "//tools/data-binding:data_binding_runtime_support.zip",
         "//tools/data-binding:data_binding_runtime_androidx.zip",
     ],
+    tags = ["no_mac"],
     visibility = ["//visibility:public"],
 )
