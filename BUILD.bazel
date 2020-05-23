@@ -354,13 +354,13 @@ gradle_build(
             "extensions/gradlew.bat",
         ],
     ),
+    max_workers = 1,  # b/155772061
     output_file = "data_binding_runtime_androidx.zip",
     output_file_source = "local_repo_zip/dataBindingRuntimeRepo.zip",
     repos = [
         "//tools/base/build-system:gradle_plugin_repo.zip",
         ":external_deps.zip",
     ],
-    tags = ["no_mac"],
     tasks = ["createArchive"],
 )
 
@@ -386,13 +386,13 @@ gradle_build(
             "extensions-support/gradlew.bat",
         ],
     ),
+    max_workers = 1,  # b/155772061
     output_file = "data_binding_runtime_support.zip",
     output_file_source = "local_repo_zip/dataBindingRuntimeRepo.zip",
     repos = [
         "//tools/base/build-system:gradle_plugin_repo.zip",
         ":external_deps.zip",
     ],
-    tags = ["no_mac"],
     tasks = ["createArchive"],
 )
 
@@ -427,6 +427,5 @@ merge_jars(
         "//tools/data-binding:data_binding_runtime_support.zip",
         "//tools/data-binding:data_binding_runtime_androidx.zip",
     ],
-    tags = ["no_mac"],
     visibility = ["//visibility:public"],
 )
