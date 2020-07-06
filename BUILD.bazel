@@ -162,6 +162,7 @@ kotlin_library(
         "//tools/base/third_party:com.googlecode.juniversalchardet_juniversalchardet",
         "//tools/base/third_party:com.squareup_javapoet",
         "//tools/base/third_party:commons-io_commons-io",
+        "//tools/base/third_party:jakarta.xml.bind_jakarta.xml.bind-api",
         "//tools/base/third_party:org.antlr_antlr4",
         "//tools/base/third_party:org.jetbrains.kotlin_kotlin-stdlib",
     ],
@@ -234,6 +235,7 @@ iml_module(
         "//prebuilts/tools/common/m2/repository/com/google/auto/auto-common/0.10:jar",
         "//tools/idea/.idea/libraries:compile-testing[test]",
         "//tools/idea/.idea/libraries:truth[test]",
+        "//tools/idea/.idea/libraries:jaxb-api",
     ],
 )
 
@@ -256,6 +258,7 @@ kotlin_library(
         "//tools/base/third_party:com.google.guava_guava",
         "//tools/base/third_party:com.squareup_javapoet",
         "//tools/base/third_party:commons-io_commons-io",
+        "//tools/base/third_party:jakarta.xml.bind_jakarta.xml.bind-api",
         "//tools/base/third_party:org.antlr_antlr4",
         "//tools/base/third_party:org.jetbrains.kotlin_kotlin-stdlib",
     ],
