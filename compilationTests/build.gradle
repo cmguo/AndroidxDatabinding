@@ -27,10 +27,6 @@ afterEvaluate {
     tasks['test'].dependsOn(rootProject.subprojects.uploadArchives)
 }
 
-test {
-    systemProperty 'java.home', rootProject.file('../../prebuilts/studio/jdk/jdk11/' + getOsSdkFolderName())
-}
-
 compileJava {
     options.compilerArgs += ["-proc:none"]
 }

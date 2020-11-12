@@ -19,6 +19,9 @@ import org.gradle.internal.jvm.Jvm
 apply plugin: 'java-library'
 apply plugin: 'kotlin'
 
+sourceCompatibility = dataBindingConfig.compilerJavaTargetCompatibility
+targetCompatibility = dataBindingConfig.compilerJavaSourceCompatibility
+
 buildscript {
     dependencies {
         classpath libs.kotlin_gradle_plugin
