@@ -21,12 +21,6 @@ import android.databinding.tool.processing.ScopedErrorReport;
 import android.databinding.tool.processing.ScopedException;
 import android.databinding.tool.store.Location;
 import com.google.common.base.Joiner;
-
-import java.util.Collection;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.filefilter.NameFileFilter;
-import org.apache.commons.io.filefilter.PrefixFileFilter;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Ignore;
@@ -51,54 +45,6 @@ import static org.junit.Assert.fail;
 @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
 @RunWith(JUnit4.class)
 public class SimpleCompilationTest extends BaseCompilationTest {
-    @Test
-    public void listTasks() throws IOException, URISyntaxException, InterruptedException {
-        prepareProject();
-        CompilationResult result = runGradle("tasks");
-        assertEquals(0, result.resultCode);
-        assertTrue("there should not be any errors", filterKnownWarnings(result).isEmpty());
-        assertTrue("Test sanity, empty project tasks",
-                result.resultContainsText("Tasks runnable from root project"));
-    }
-
-    @Test
-    public void testEmptyCompilation() throws IOException, URISyntaxException, InterruptedException {
-        prepareProject();
-        CompilationResult result = runGradle("assembleDebug");
-        assertEquals(result.error, 0, result.resultCode);
-        assertTrue("there should not be any errors " + result.error,
-                filterKnownWarnings(result).isEmpty());
-        assertTrue("Test sanity, should compile fine",
-                result.resultContainsText("BUILD SUCCESSFUL"));
-    }
-
-    @Test
-    public void testMultipleConfigs() throws IOException, URISyntaxException, InterruptedException {
-        prepareProject();
-        copyResourceTo("/layout/basic_layout.xml",
-                "/app/src/main/res/layout/main.xml");
-        copyResourceTo("/layout/basic_layout.xml",
-                "/app/src/main/res/layout-sw100dp/main.xml");
-        CompilationResult result = runGradle("assembleDebug");
-        assertEquals(result.error, 0, result.resultCode);
-        File debugOut = new File(testFolder,
-                "app/build/intermediates/incremental/mergeDebugResources/stripped.dir");
-        Collection<File> layoutFiles = FileUtils.listFiles(debugOut, new NameFileFilter("main.xml"),
-                                                           new PrefixFileFilter("layout"));
-        assertTrue("test sanity", layoutFiles.size() > 1);
-        for (File layout : layoutFiles) {
-            final String contents = FileUtils.readFileToString(layout);
-            if (layout.getParent().contains("sw100")) {
-                assertTrue("File has wrong tag:" + layout.getPath(),
-                        contents.indexOf("android:tag=\"layout-sw100dp/main_0\"") > 0);
-            } else {
-                assertTrue("File has wrong tag:" + layout.getPath() + "\n" + contents,
-                        contents.indexOf("android:tag=\"layout/main_0\"")
-                                > 0);
-            }
-        }
-    }
-
     private ScopedException singleFileErrorTest(String resource, String targetFile,
             String expectedExtract, String errorMessage)
             throws IOException, URISyntaxException, InterruptedException {
