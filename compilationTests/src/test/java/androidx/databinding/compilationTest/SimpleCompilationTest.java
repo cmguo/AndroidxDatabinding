@@ -20,39 +20,31 @@ import android.databinding.tool.processing.ErrorMessages;
 import android.databinding.tool.processing.ScopedErrorReport;
 import android.databinding.tool.processing.ScopedException;
 import android.databinding.tool.store.Location;
-import com.android.annotations.NonNull;
 import com.google.common.base.Joiner;
-import com.google.common.base.Predicate;
+
+import java.util.Collection;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.filefilter.PrefixFileFilter;
-import org.apache.commons.lang3.StringUtils;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
-import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static androidx.databinding.compilationTest.DataBindingCompilationTestUtilsKt.copyResourceWithReplacement;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -338,7 +330,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         CompilationResult result = runGradle("assembleDebug");
         assertEquals(result.error, 0, result.resultCode);
         File moduleFolder = new File(testFolder, "module1");
-        copyResourceTo("/module_build.gradle", new File(moduleFolder, "build.gradle"),
+        copyResourceWithReplacement("/module_build.gradle", new File(moduleFolder, "build.gradle"),
                 toMap());
         result = runGradle("assembleDebug");
         assertEquals(result.error, 0, result.resultCode);
