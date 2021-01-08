@@ -30,6 +30,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -91,7 +92,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
         File debugOut = new File(testFolder,
                 "app/build/intermediates/incremental/mergeDebugResources/stripped.dir");
         Collection<File> layoutFiles = FileUtils.listFiles(debugOut, new NameFileFilter("main.xml"),
-                new PrefixFileFilter("layout"));
+                                                           new PrefixFileFilter("layout"));
         assertTrue("test sanity", layoutFiles.size() > 1);
         for (File layout : layoutFiles) {
             final String contents = FileUtils.readFileToString(layout);
@@ -217,8 +218,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
     @Test
     public void testInvalidSetterBinding() throws IOException, URISyntaxException,
             InterruptedException {
-        prepareProject();
-        ScopedException ex = singleFileErrorTest("/layout/invalid_setter_binding.xml",
+        singleFileErrorTest("/layout/invalid_setter_binding.xml",
                 "/app/src/main/res/layout/invalid_setter.xml", "myVariable",
                 String.format(ErrorMessages.CANNOT_FIND_SETTER_CALL, "android.widget.TextView",
                     "android:textx", String.class.getCanonicalName()));
@@ -255,8 +255,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
     @Test
     public void testInvalidVariableType() throws IOException, URISyntaxException,
             InterruptedException {
-        prepareProject();
-        ScopedException ex = singleFileErrorTest("/layout/invalid_variable_type.xml",
+        singleFileErrorTest("/layout/invalid_variable_type.xml",
                 "/app/src/main/res/layout/invalid_variable.xml", "myVariable",
                 String.format(ErrorMessages.CANNOT_RESOLVE_TYPE, "myVariable"));
     }
@@ -326,7 +325,7 @@ public class SimpleCompilationTest extends BaseCompilationTest {
     }
 
     // TODO: reenable this test once it works.
-    //@Test
+    @Ignore
     public void testModuleDependencyChange() throws IOException, URISyntaxException,
             InterruptedException {
         prepareApp(toMap(KEY_DEPENDENCIES, "implementation project(':module1')",
