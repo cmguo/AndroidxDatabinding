@@ -21,7 +21,6 @@ import androidx.databinding.compilationTest.MultiLayoutVerificationTest
 import androidx.databinding.compilationTest.NonEnglishLocaleTest
 import androidx.databinding.compilationTest.ObservableGetDetectionTest
 import androidx.databinding.compilationTest.RecursiveObservableTest
-import androidx.databinding.compilationTest.SimpleCompilationTest
 import androidx.databinding.compilationTest.TooManyLayoutsTest
 import com.android.testutils.JarTestSuiteRunner
 import com.android.tools.tests.IdeaTestSuiteBase
@@ -37,7 +36,6 @@ import org.junit.runner.RunWith
     NonEnglishLocaleTest::class,
     ObservableGetDetectionTest::class,
     RecursiveObservableTest::class,
-    SimpleCompilationTest::class,
     TooManyLayoutsTest::class
 )
 class DataBindingCompilationTestSuite: IdeaTestSuiteBase() {

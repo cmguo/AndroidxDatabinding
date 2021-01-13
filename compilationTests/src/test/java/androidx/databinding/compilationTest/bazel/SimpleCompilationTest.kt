@@ -19,12 +19,20 @@ import android.databinding.tool.processing.ErrorMessages
 import android.databinding.tool.processing.ScopedErrorReport
 import android.databinding.tool.processing.ScopedException
 import android.databinding.tool.store.Location
+import androidx.databinding.compilationTest.BaseCompilationTest
+import androidx.databinding.compilationTest.BaseCompilationTest.KEY_DEPENDENCIES
+import androidx.databinding.compilationTest.BaseCompilationTest.KEY_MANIFEST_PACKAGE
+import androidx.databinding.compilationTest.CompilationResult
 import androidx.databinding.compilationTest.copyResourceToFile
+import androidx.databinding.compilationTest.copyResourceWithReplacement
 import com.google.common.base.Joiner
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
 import org.apache.commons.io.filefilter.PrefixFileFilter
+import org.hamcrest.CoreMatchers
+import org.hamcrest.MatcherAssert
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -184,13 +192,350 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
         )
     }
 
+    @Test
+    fun testMultipleExceptionsInDifferentFiles() {
+        loadApp()
+        copyResource(
+            "/layout/undefined_variable_binding.xml",
+            "/app/src/main/res/layout/broken.xml"
+        )
+        copyResource(
+            "/layout/invalid_setter_binding.xml",
+            "/app/src/main/res/layout/invalid_setter.xml"
+        )
+        val result = assembleDebug()
+        Assert.assertNotEquals(result.output, 0, result.resultCode.toLong())
+        val bindingExceptions = result.bindingExceptions
+        Assert.assertEquals(result.error, 2, bindingExceptions.size.toLong())
+        val broken = File(projectRoot, "/app/src/main/res/layout/broken.xml")
+        val invalidSetter = File(projectRoot, "/app/src/main/res/layout/invalid_setter.xml")
+        for (exception in bindingExceptions) {
+            val report = exception.scopedErrorReport
+            val errorFile = requireErrorFile(report)
+            var message: String? = null
+            var expectedErrorFile: String? = null
+            when (errorFile.canonicalPath) {
+                broken.canonicalPath -> {
+                    message = String.format(ErrorMessages.UNDEFINED_VARIABLE, "myVariable")
+                    expectedErrorFile = "/app/src/main/res/layout/broken.xml"
+                }
+                invalidSetter.canonicalPath -> {
+                    message = String.format(
+                        ErrorMessages.CANNOT_FIND_SETTER_CALL,
+                        "android.widget.TextView", "android:textx", String::class.java.canonicalName
+                    )
+                    expectedErrorFile = "/app/src/main/res/layout/invalid_setter.xml"
+                }
+                else -> {
+                    Assert.fail("unexpected exception " + exception.bareMessage)
+                }
+            }
+            Assert.assertEquals(1, report.locations.size.toLong())
+            val loc = report.locations[0]
+            val extract = extract(expectedErrorFile!!, loc)
+            Assert.assertEquals("myVariable", extract)
+            Assert.assertEquals(message, exception.bareMessage)
+        }
+    }
+
+    @Test
+    fun testSingleModule() {
+        loadApp(
+            mapOf(
+                KEY_DEPENDENCIES to "implementation project(':module1')",
+                BaseCompilationTest.KEY_SETTINGS_INCLUDES to "include ':app'\ninclude ':module1'"
+            )
+        )
+        loadModule("module1", mapOf(KEY_MANIFEST_PACKAGE to "com.example.module1"))
+        copyResource("/layout/basic_layout.xml", "/module1/src/main/res/layout/module_layout.xml")
+        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/app_layout.xml")
+
+        val result: CompilationResult = assembleDebug()
+        assertEquals(result.error, 0, result.resultCode.toLong())
+    }
+
+    @Test
+    fun testConflictingIds() {
+        loadApp()
+        copyResource(
+            "/layout/duplicate_ids.xml",
+            "/app/src/main/res/layout/duplicate_ids.xml"
+        )
+        val result = assembleDebug()
+        val exceptions = result.bindingExceptions
+        assertMessages(
+            exceptions, String.format(
+                ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                "TextView", "@+id/shared_id"
+            ), String.format(
+                ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                "TextView", "@+id/shared_id"
+            )
+        )
+    }
+
+    @Test
+    fun testConflictingIds_include() {
+        loadApp()
+        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/basic_layout.xml")
+        copyResource(
+            "/layout/duplicate_include_ids.xml",
+            "/app/src/main/res/layout/duplicate_include_ids.xml"
+        )
+        val result = assembleDebug()
+        val exceptions = result.bindingExceptions
+        assertMessages(
+            exceptions, String.format(
+                ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                "include", "@+id/shared_id"
+            ), String.format(
+                ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                "include", "@+id/shared_id"
+            )
+        )
+    }
+
+    @Test
+    fun testConflictingIds_includeVsView() {
+        loadApp()
+        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/basic_layout.xml")
+        copyResource(
+            "/layout/duplicate_include_vs_view_ids.xml",
+            "/app/src/main/res/layout/duplicate_include_vs_view_ids.xml"
+        )
+        val result = assembleDebug()
+        val exceptions = result.bindingExceptions
+        assertMessages(
+            exceptions, String.format(
+                ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                "TextView", "@+id/shared_id"
+            ), String.format(
+                ErrorMessages.DUPLICATE_VIEW_OR_INCLUDE_ID,
+                "include", "@+id/shared_id"
+            )
+        )
+    }
+
+    // TODO: reenable this test once it works.
+    @Ignore
+    fun testModuleDependencyChange() {
+        loadApp(
+            mapOf(
+                KEY_DEPENDENCIES to "implementation project(':module1')",
+                BaseCompilationTest.KEY_SETTINGS_INCLUDES to "include ':app'\ninclude ':module1'"
+            )
+        )
+        loadModule(
+            "module1", mapOf(
+                KEY_DEPENDENCIES to "implementation 'com.android.support:appcompat-v7:23.1.1'",
+                KEY_MANIFEST_PACKAGE to "com.example.module1"
+            )
+        )
+        copyResource("/layout/basic_layout.xml", "/module1/src/main/res/layout/module_layout.xml")
+        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/app_layout.xml")
+        var result = assembleDebug()
+        Assert.assertEquals(result.error, 0, result.resultCode.toLong())
+        val moduleFolder = File(projectRoot, "module1")
+        copyResourceWithReplacement(
+            "/module_build.gradle", File(moduleFolder, "build.gradle")
+        )
+        result = assembleDebug()
+        Assert.assertEquals(result.error, 0, result.resultCode.toLong())
+    }
+
+    @Test
+    fun testTwoLevelDependency() {
+        loadApp(
+            mapOf(
+                KEY_DEPENDENCIES to "implementation project(':module1')",
+                BaseCompilationTest.KEY_SETTINGS_INCLUDES to
+                        "include ':app'\ninclude ':module1'\n"
+                        + "include ':module2'"
+            )
+        )
+        loadModule(
+            "module1",
+            mapOf(
+                KEY_DEPENDENCIES to "implementation project(':module2')",
+                KEY_MANIFEST_PACKAGE to "com.example.module1"
+            )
+        )
+        loadModule("module2", mapOf(KEY_MANIFEST_PACKAGE to "com.example.module2"))
+        copyResource(
+            "/layout/basic_layout.xml",
+            "/module2/src/main/res/layout/module2_layout.xml"
+        )
+        copyResource(
+            "/layout/basic_layout.xml",
+            "/module1/src/main/res/layout/module1_layout.xml"
+        )
+        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/app_layout.xml")
+        val result = assembleDebug()
+        Assert.assertEquals(result.error, 0, result.resultCode.toLong())
+    }
+
+    @Test
+    fun testIncludeInMerge() {
+        loadApp()
+        copyResource("/layout/merge_include.xml", "/app/src/main/res/layout/merge_include.xml")
+        val result = assembleDebug()
+        Assert.assertNotEquals(0, result.resultCode.toLong())
+        val errors = ScopedException.extractErrors(result.error)
+        Assert.assertEquals(result.error, 1, errors.size.toLong())
+        val ex = errors[0]
+        val report = ex.scopedErrorReport
+        val errorFile = requireErrorFile(report)
+        Assert.assertEquals(
+            File(projectRoot, "/app/src/main/res/layout/merge_include.xml").canonicalFile,
+            errorFile.canonicalFile
+        )
+        Assert.assertEquals(ErrorMessages.INCLUDE_INSIDE_MERGE, ex.bareMessage)
+    }
+
+    @Test
+    fun testAssignTwoWayEvent() {
+        loadApp()
+        copyResource(
+            "/layout/layout_with_two_way_event_attribute.xml",
+            "/app/src/main/res/layout/layout_with_two_way_event_attribute.xml"
+        )
+        val result: CompilationResult = assembleDebug()
+        Assert.assertNotEquals(0, result.resultCode.toLong())
+        val errors = ScopedException.extractErrors(result.error)
+        Assert.assertEquals(result.error, 1, errors.size.toLong())
+        val ex = errors[0]
+        val report = ex.scopedErrorReport
+        val errorFile = requireErrorFile(report)
+        Assert.assertEquals(
+            File(
+                projectRoot,
+                "/app/src/main/res/layout/layout_with_two_way_event_attribute.xml"
+            ).canonicalFile,
+            errorFile.canonicalFile
+        )
+        Assert.assertEquals(
+            String.format(ErrorMessages.TWO_WAY_EVENT_ATTRIBUTE, "android:textAttrChanged"),
+            ex.bareMessage
+        )
+    }
+
+    @Ignore("to be fixed in follow up cl when resources are moved to testData")
+    fun testDependantDoesNotExist() {
+        loadApp()
+        copyResource(
+            "/layout/layout_with_dependency.xml",
+            "/app/src/main/res/layout/layout_with_dependency.xml"
+        )
+        copyResource(
+            "/androidx/databinding/compilationTest/badJava/ObservableNoDependent.java",
+            "/app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
+        )
+        val result: CompilationResult = assembleDebug()
+        Assert.assertNotEquals(0, result.resultCode.toLong())
+        val errors = ScopedException.extractErrors(result.error)
+        Assert.assertEquals(result.error, 1, errors.size.toLong())
+        val ex = errors[0]
+        val report = ex.scopedErrorReport
+        val errorFile = requireErrorFile(report)
+        Assert.assertEquals(
+            File(
+                projectRoot,
+                "/app/src/main/res/layout/layout_with_dependency.xml"
+            ).canonicalFile,
+            errorFile.canonicalFile
+        )
+        Assert.assertEquals(
+            ("Could not find dependent property 'notExist' referenced in " +
+                    "@Bindable annotation on " +
+                    "androidx.databinding.compilationTest.badJava.MyObservable.getField"),
+            ex.bareMessage
+        )
+    }
+
+    @Ignore("to be fixed in follow up cl when resources are moved to testData")
+    fun testDependantNotBindable() {
+        loadApp()
+        copyResource(
+            "/layout/layout_with_dependency.xml",
+            "/app/src/main/res/layout/layout_with_dependency.xml"
+        )
+        copyResource(
+            "/androidx/databinding/compilationTest/badJava/ObservableNotBindableDependent.java",
+            "/app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
+        )
+        val result: CompilationResult = assembleDebug()
+        Assert.assertNotEquals(0, result.resultCode.toLong())
+        val errors = ScopedException.extractErrors(result.error)
+        Assert.assertEquals(result.error, 1, errors.size.toLong())
+        val ex = errors[0]
+        val report = ex.scopedErrorReport
+        val errorFile = requireErrorFile(report)
+        Assert.assertEquals(
+            File(
+                projectRoot,
+                "/app/src/main/res/layout/layout_with_dependency.xml"
+            ).canonicalFile,
+            errorFile.canonicalFile
+        )
+        Assert.assertEquals(
+            ("The dependent property 'otherField' referenced in " +
+                    "@Bindable annotation on " +
+                    "androidx.databinding.compilationTest.badJava.MyObservable.getField " +
+                    "must be annotated with @Bindable"), ex.bareMessage
+        )
+    }
+
+    @Ignore("to be fixed in follow up cl when resources are moved to testData")
+    fun testDependantField() {
+        loadApp()
+        copyResource(
+            "/layout/layout_with_dependency.xml",
+            "/app/src/main/res/layout/layout_with_dependency.xml"
+        )
+        copyResource(
+            "/androidx/databinding/compilationTest/badJava/ObservableFieldDependent.java",
+            "/app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
+        )
+        val result: CompilationResult = assembleDebug()
+        Assert.assertNotEquals(0, result.resultCode.toLong())
+        val errors = ScopedException.extractErrors(result.error)
+        Assert.assertEquals(result.error, 1, errors.size.toLong())
+        val ex = errors[0]
+        val report = ex.scopedErrorReport
+        val errorFile = requireErrorFile(report)
+        Assert.assertTrue(errorFile.exists())
+        Assert.assertEquals(
+            File(
+                projectRoot,
+                "/app/src/main/res/layout/layout_with_dependency.xml"
+            ).canonicalFile,
+            errorFile.canonicalFile
+        )
+        Assert.assertEquals(
+            ("Bindable annotation with property names is only supported on methods. " +
+                    "Field 'androidx.databinding.compilationTest.badJava.MyObservable.field' has " +
+                    "@Bindable(\"otherField\")"), ex.bareMessage
+        )
+    }
+
+    private fun assertMessages(
+        exceptions: List<ScopedException>,
+        vararg messages: String
+    ) {
+        val actual = exceptions
+            .map { obj: ScopedException -> obj.bareMessage }
+            .toList()
+        MatcherAssert.assertThat(actual, CoreMatchers.hasItems(*messages))
+        MatcherAssert.assertThat(actual.size, CoreMatchers.`is`(messages.size))
+    }
+
     private fun singleFileWarningTest(
         resource: String, targetFile: String,
         expectedMessage: String
     ) {
         loadApp()
         copyResourceToFile(resource, File(projectRoot, targetFile))
-        val result = invokeTasks(listOf("assembleDebug"))
+        val result = assembleDebug()
         val warnings = result.bindingWarnings
         var found = false
         for (warning in warnings) {
@@ -204,11 +549,10 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
         targetFile: String,
         expectedExtract: String?,
         errorMessage: String?
-    ) : ScopedException {
+    ): ScopedException {
         loadApp()
         copyResourceToFile(resource, File(projectRoot, targetFile))
-        val result = invokeTasks(listOf("assembleDebug"))
-
+        val result = assembleDebug()
         assertFalse(result.isBuildSuccessful)
         val scopedException = result.bindingException
         val report = scopedException.scopedErrorReport
@@ -217,10 +561,10 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
 
         val loc = report.locations[0]
         if (expectedExtract != null) {
-            val extract: String = extract(File(projectRoot, targetFile), loc)
+            val extract: String = extract(targetFile, loc)
             Assert.assertEquals(scopedException.message, expectedExtract, extract)
         }
-        val errorFile: File = requireErrorFile(report, projectRoot)
+        val errorFile: File = requireErrorFile(report)
         Assert.assertEquals(
             File(projectRoot, targetFile).canonicalFile,
             errorFile.canonicalFile
@@ -234,12 +578,13 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     /**
      * Extracts the text in the given location from the file at the given application path.
      *
-     * @param file The file to be extracted from.
+     * @param relativePath the relative path of the file to be extracted from
      * @param location  The location to extract
      * @return The string that is contained in the given location
      * @throws IOException If file is invalid.
      */
-    private fun extract(file: File, location: Location): String {
+    private fun extract(relativePath: String, location: Location): String {
+        val file = File(projectRoot, relativePath)
         Assert.assertTrue(file.exists())
         val result = StringBuilder()
         val lines = file.readLines(StandardCharsets.UTF_8)
@@ -267,7 +612,7 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
      *
      * Throws an assertion exception if the error file reported cannot be found.
      */
-    private fun requireErrorFile(report: ScopedErrorReport, projectRoot: File): File {
+    private fun requireErrorFile(report: ScopedErrorReport): File {
         val path = report.filePath
         Assert.assertNotNull(path)
         var file = File(path)
