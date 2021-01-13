@@ -23,8 +23,6 @@ import androidx.databinding.compilationTest.BaseCompilationTest
 import androidx.databinding.compilationTest.BaseCompilationTest.KEY_DEPENDENCIES
 import androidx.databinding.compilationTest.BaseCompilationTest.KEY_MANIFEST_PACKAGE
 import androidx.databinding.compilationTest.CompilationResult
-import androidx.databinding.compilationTest.copyResourceToFile
-import androidx.databinding.compilationTest.copyResourceWithReplacement
 import com.google.common.base.Joiner
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
@@ -60,12 +58,12 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testMultipleConfigs() {
         loadApp()
-        copyResource(
-            "/layout/basic_layout.xml",
+        copyTestData(
+            "layout/basic_layout.xml",
             "app/src/main/res/layout/main.xml"
         )
-        copyResource(
-            "/layout/basic_layout.xml",
+        copyTestData(
+            "layout/basic_layout.xml",
             "app/src/main/res/layout-sw100dp/main.xml"
         )
         val result = invokeGradleTasks(project, "assembleDebug")
@@ -98,8 +96,8 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testBadSyntax() {
         singleFileErrorTest(
-            "/layout/layout_with_bad_syntax.xml",
-            "/app/src/main/res/layout/broken.xml",
+            "layout/layout_with_bad_syntax.xml",
+            "app/src/main/res/layout/broken.xml",
             "myVar.length())",
             String.format(
                 ErrorMessages.SYNTAX_ERROR,
@@ -113,8 +111,8 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testBrokenSyntax() {
         singleFileErrorTest(
-            "/layout/layout_with_completely_broken_syntax.xml",
-            "/app/src/main/res/layout/broken.xml",
+            "layout/layout_with_completely_broken_syntax.xml",
+            "app/src/main/res/layout/broken.xml",
             "new String()", String.format(
                 ErrorMessages.SYNTAX_ERROR,
                 "mismatched input 'String' expecting {<EOF>, ',', '.', '::', '[', '+', " +
@@ -127,8 +125,8 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testUndefinedVariable() {
         singleFileErrorTest(
-            "/layout/undefined_variable_binding.xml",
-            "/app/src/main/res/layout/broken.xml", "myVariable", String.format(
+            "layout/undefined_variable_binding.xml",
+            "app/src/main/res/layout/broken.xml", "myVariable", String.format(
                 ErrorMessages.UNDEFINED_VARIABLE, "myVariable"
             )
         )
@@ -137,8 +135,8 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testInvalidSetterBinding() {
         singleFileErrorTest(
-            "/layout/invalid_setter_binding.xml",
-            "/app/src/main/res/layout/invalid_setter.xml", "myVariable", String.format(
+            "layout/invalid_setter_binding.xml",
+            "app/src/main/res/layout/invalid_setter.xml", "myVariable", String.format(
                 ErrorMessages.CANNOT_FIND_SETTER_CALL, "android.widget.TextView",
                 "android:textx",
                 String::class.java.canonicalName
@@ -149,8 +147,8 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testCallbackArgumentCountMismatch() {
         singleFileErrorTest(
-            "/layout/layout_with_missing_callback_args.xml",
-            "/app/src/main/res/layout/broken.xml",
+            "layout/layout_with_missing_callback_args.xml",
+            "app/src/main/res/layout/broken.xml",
             "(seekBar, progress) -> obj.length()", String.format(
                 ErrorMessages.CALLBACK_ARGUMENT_COUNT_MISMATCH,
                 "androidx.databinding.adapters.SeekBarBindingAdapter.OnProgressChanged",
@@ -162,8 +160,8 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testDuplicateCallbackArgument() {
         singleFileErrorTest(
-            "/layout/layout_with_duplicate_callback_identifier.xml",
-            "/app/src/main/res/layout/broken.xml",
+            "layout/layout_with_duplicate_callback_identifier.xml",
+            "app/src/main/res/layout/broken.xml",
             "(seekBar, progress, progress) -> obj.length()", String.format(
                 ErrorMessages.DUPLICATE_CALLBACK_ARGUMENT,
                 "progress"
@@ -174,8 +172,8 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testInvalidVariableType() {
         singleFileErrorTest(
-            "/layout/invalid_variable_type.xml",
-            "/app/src/main/res/layout/invalid_variable.xml",
+            "layout/invalid_variable_type.xml",
+            "app/src/main/res/layout/invalid_variable.xml",
             "myVariable",
             String.format(ErrorMessages.CANNOT_RESOLVE_TYPE, "myVariable")
         )
@@ -184,8 +182,8 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testConflictWithVariableName() {
         singleFileWarningTest(
-            "/layout/layout_with_same_name_for_var_and_callback.xml",
-            "/app/src/main/res/layout/broken.xml", String.format(
+            "layout/layout_with_same_name_for_var_and_callback.xml",
+            "app/src/main/res/layout/broken.xml", String.format(
                 ErrorMessages.CALLBACK_VARIABLE_NAME_CLASH,
                 "myVar", "String", "myVar"
             )
@@ -195,13 +193,13 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testMultipleExceptionsInDifferentFiles() {
         loadApp()
-        copyResource(
-            "/layout/undefined_variable_binding.xml",
-            "/app/src/main/res/layout/broken.xml"
+        copyTestData(
+            "layout/undefined_variable_binding.xml",
+            "app/src/main/res/layout/broken.xml"
         )
-        copyResource(
-            "/layout/invalid_setter_binding.xml",
-            "/app/src/main/res/layout/invalid_setter.xml"
+        copyTestData(
+            "layout/invalid_setter_binding.xml",
+            "app/src/main/res/layout/invalid_setter.xml"
         )
         val result = assembleDebug()
         Assert.assertNotEquals(result.output, 0, result.resultCode.toLong())
@@ -247,8 +245,8 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
             )
         )
         loadModule("module1", mapOf(KEY_MANIFEST_PACKAGE to "com.example.module1"))
-        copyResource("/layout/basic_layout.xml", "/module1/src/main/res/layout/module_layout.xml")
-        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/app_layout.xml")
+        copyTestData("layout/basic_layout.xml", "module1/src/main/res/layout/module_layout.xml")
+        copyTestData("layout/basic_layout.xml", "app/src/main/res/layout/app_layout.xml")
 
         val result: CompilationResult = assembleDebug()
         assertEquals(result.error, 0, result.resultCode.toLong())
@@ -257,9 +255,9 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testConflictingIds() {
         loadApp()
-        copyResource(
-            "/layout/duplicate_ids.xml",
-            "/app/src/main/res/layout/duplicate_ids.xml"
+        copyTestData(
+            "layout/duplicate_ids.xml",
+            "app/src/main/res/layout/duplicate_ids.xml"
         )
         val result = assembleDebug()
         val exceptions = result.bindingExceptions
@@ -277,10 +275,10 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testConflictingIds_include() {
         loadApp()
-        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/basic_layout.xml")
-        copyResource(
-            "/layout/duplicate_include_ids.xml",
-            "/app/src/main/res/layout/duplicate_include_ids.xml"
+        copyTestData("layout/basic_layout.xml", "app/src/main/res/layout/basic_layout.xml")
+        copyTestData(
+            "layout/duplicate_include_ids.xml",
+            "app/src/main/res/layout/duplicate_include_ids.xml"
         )
         val result = assembleDebug()
         val exceptions = result.bindingExceptions
@@ -298,10 +296,10 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testConflictingIds_includeVsView() {
         loadApp()
-        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/basic_layout.xml")
-        copyResource(
-            "/layout/duplicate_include_vs_view_ids.xml",
-            "/app/src/main/res/layout/duplicate_include_vs_view_ids.xml"
+        copyTestData("layout/basic_layout.xml", "app/src/main/res/layout/basic_layout.xml")
+        copyTestData(
+            "layout/duplicate_include_vs_view_ids.xml",
+            "app/src/main/res/layout/duplicate_include_vs_view_ids.xml"
         )
         val result = assembleDebug()
         val exceptions = result.bindingExceptions
@@ -331,14 +329,11 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
                 KEY_MANIFEST_PACKAGE to "com.example.module1"
             )
         )
-        copyResource("/layout/basic_layout.xml", "/module1/src/main/res/layout/module_layout.xml")
-        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/app_layout.xml")
+        copyTestData("layout/basic_layout.xml", "module1/src/main/res/layout/module_layout.xml")
+        copyTestData("layout/basic_layout.xml", "app/src/main/res/layout/app_layout.xml")
         var result = assembleDebug()
         Assert.assertEquals(result.error, 0, result.resultCode.toLong())
-        val moduleFolder = File(projectRoot, "module1")
-        copyResourceWithReplacement(
-            "/module_build.gradle", File(moduleFolder, "build.gradle")
-        )
+        copyTestDataWithReplacement("module_build.gradle", "module1/build.gradle")
         result = assembleDebug()
         Assert.assertEquals(result.error, 0, result.resultCode.toLong())
     }
@@ -361,15 +356,15 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
             )
         )
         loadModule("module2", mapOf(KEY_MANIFEST_PACKAGE to "com.example.module2"))
-        copyResource(
-            "/layout/basic_layout.xml",
-            "/module2/src/main/res/layout/module2_layout.xml"
+        copyTestData(
+            "layout/basic_layout.xml",
+            "module2/src/main/res/layout/module2_layout.xml"
         )
-        copyResource(
-            "/layout/basic_layout.xml",
-            "/module1/src/main/res/layout/module1_layout.xml"
+        copyTestData(
+            "layout/basic_layout.xml",
+            "module1/src/main/res/layout/module1_layout.xml"
         )
-        copyResource("/layout/basic_layout.xml", "/app/src/main/res/layout/app_layout.xml")
+        copyTestData("layout/basic_layout.xml", "app/src/main/res/layout/app_layout.xml")
         val result = assembleDebug()
         Assert.assertEquals(result.error, 0, result.resultCode.toLong())
     }
@@ -377,7 +372,7 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testIncludeInMerge() {
         loadApp()
-        copyResource("/layout/merge_include.xml", "/app/src/main/res/layout/merge_include.xml")
+        copyTestData("layout/merge_include.xml", "app/src/main/res/layout/merge_include.xml")
         val result = assembleDebug()
         Assert.assertNotEquals(0, result.resultCode.toLong())
         val errors = ScopedException.extractErrors(result.error)
@@ -395,9 +390,9 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     @Test
     fun testAssignTwoWayEvent() {
         loadApp()
-        copyResource(
-            "/layout/layout_with_two_way_event_attribute.xml",
-            "/app/src/main/res/layout/layout_with_two_way_event_attribute.xml"
+        copyTestData(
+            "layout/layout_with_two_way_event_attribute.xml",
+            "app/src/main/res/layout/layout_with_two_way_event_attribute.xml"
         )
         val result: CompilationResult = assembleDebug()
         Assert.assertNotEquals(0, result.resultCode.toLong())
@@ -419,16 +414,16 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
         )
     }
 
-    @Ignore("to be fixed in follow up cl when resources are moved to testData")
+    @Test
     fun testDependantDoesNotExist() {
         loadApp()
-        copyResource(
-            "/layout/layout_with_dependency.xml",
-            "/app/src/main/res/layout/layout_with_dependency.xml"
+        copyTestData(
+            "layout/layout_with_dependency.xml",
+            "app/src/main/res/layout/layout_with_dependency.xml"
         )
-        copyResource(
-            "/androidx/databinding/compilationTest/badJava/ObservableNoDependent.java",
-            "/app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
+        copyTestData(
+            "androidx.databinding.compilationTests.badJava/ObservableNoDependent.java",
+            "app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
         )
         val result: CompilationResult = assembleDebug()
         Assert.assertNotEquals(0, result.resultCode.toLong())
@@ -452,16 +447,16 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
         )
     }
 
-    @Ignore("to be fixed in follow up cl when resources are moved to testData")
+    @Test
     fun testDependantNotBindable() {
         loadApp()
-        copyResource(
-            "/layout/layout_with_dependency.xml",
-            "/app/src/main/res/layout/layout_with_dependency.xml"
+        copyTestData(
+            "layout/layout_with_dependency.xml",
+            "app/src/main/res/layout/layout_with_dependency.xml"
         )
-        copyResource(
-            "/androidx/databinding/compilationTest/badJava/ObservableNotBindableDependent.java",
-            "/app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
+        copyTestData(
+            "androidx.databinding.compilationTests.badJava/ObservableNotBindableDependent.java",
+            "app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
         )
         val result: CompilationResult = assembleDebug()
         Assert.assertNotEquals(0, result.resultCode.toLong())
@@ -485,16 +480,16 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
         )
     }
 
-    @Ignore("to be fixed in follow up cl when resources are moved to testData")
+    @Test
     fun testDependantField() {
         loadApp()
-        copyResource(
-            "/layout/layout_with_dependency.xml",
-            "/app/src/main/res/layout/layout_with_dependency.xml"
+        copyTestData(
+            "layout/layout_with_dependency.xml",
+            "app/src/main/res/layout/layout_with_dependency.xml"
         )
-        copyResource(
-            "/androidx/databinding/compilationTest/badJava/ObservableFieldDependent.java",
-            "/app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
+        copyTestData(
+            "androidx.databinding.compilationTests.badJava/ObservableFieldDependent.java",
+            "app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
         )
         val result: CompilationResult = assembleDebug()
         Assert.assertNotEquals(0, result.resultCode.toLong())
@@ -530,11 +525,12 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
     }
 
     private fun singleFileWarningTest(
-        resource: String, targetFile: String,
+        resource: String,
+        targetFile: String,
         expectedMessage: String
     ) {
         loadApp()
-        copyResourceToFile(resource, File(projectRoot, targetFile))
+        copyTestData(resource, targetFile)
         val result = assembleDebug()
         val warnings = result.bindingWarnings
         var found = false
@@ -551,7 +547,7 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
         errorMessage: String?
     ): ScopedException {
         loadApp()
-        copyResourceToFile(resource, File(projectRoot, targetFile))
+        copyTestData(resource, targetFile)
         val result = assembleDebug()
         assertFalse(result.isBuildSuccessful)
         val scopedException = result.bindingException

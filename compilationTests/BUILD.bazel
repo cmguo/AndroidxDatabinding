@@ -14,7 +14,7 @@ iml_module(
         "//tools/adt/idea/android/testData",
         "//tools/base/build-system:gradle-distrib",
         "//tools/base/build-system:studio_repo.zip",
-    ],
+    ] + glob(["testData/**"]),
     test_resources = ["src/test/resources"],
     test_shard_count = 2,
     test_srcs = ["src/test/java"],

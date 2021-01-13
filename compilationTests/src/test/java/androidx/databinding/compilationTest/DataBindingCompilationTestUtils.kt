@@ -21,7 +21,7 @@ import java.io.File
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 
-private val pattern: Pattern = Pattern.compile("!@\\{([A-Za-z0-9_-]*)}")
+val pattern: Pattern = Pattern.compile("!@\\{([A-Za-z0-9_-]*)}")
 
 /**
  * Copies the resource to the target file.

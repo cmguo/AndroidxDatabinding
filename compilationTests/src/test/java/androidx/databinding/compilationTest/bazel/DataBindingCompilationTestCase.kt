@@ -20,8 +20,8 @@ import androidx.databinding.compilationTest.BaseCompilationTest.KEY_DEPENDENCIES
 import androidx.databinding.compilationTest.BaseCompilationTest.KEY_MANIFEST_PACKAGE
 import androidx.databinding.compilationTest.BaseCompilationTest.KEY_SETTINGS_INCLUDES
 import androidx.databinding.compilationTest.CompilationResult
-import androidx.databinding.compilationTest.copyResourceToFile
-import androidx.databinding.compilationTest.copyResourceWithReplacement
+import androidx.databinding.compilationTest.pattern
+import com.android.testutils.TestUtils
 import com.android.tools.idea.gradle.project.build.invoker.GradleBuildInvoker
 import com.android.tools.idea.testing.AndroidGradleTestCase
 import com.android.tools.idea.testing.TestProjectPaths
@@ -29,12 +29,17 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.util.io.createDirectories
+import com.intellij.util.io.readText
 import org.apache.commons.io.FileUtils
 import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
 
 private const val TEST_DEPENDENCIES = "implementation 'androidx.appcompat:appcompat:+'\n" +
         "implementation 'androidx.constraintlayout:constraintlayout:+'"
 private const val DEFAULT_SETTINGS_GRADLE = "include ':app'"
+
+private const val TEST_DATA_PATH = "tools/data-binding/compilationTests/testData"
 
 abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
 
@@ -42,35 +47,33 @@ abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
         loadProject(TestProjectPaths.DATA_BINDING_COMPILATION)
         projectRoot.toPath().resolve("app/src/main").createDirectories()
         val replacements = appendTestReplacements(appReplacements)
-        copyResourceWithReplacement(
-            "/AndroidManifest.xml",
-            File(projectRoot, "app/src/main/AndroidManifest.xml"),
+        copyTestDataWithReplacement(
+            "AndroidManifest.xml",
+            "app/src/main/AndroidManifest.xml",
             replacements
         )
-        copyResourceWithReplacement(
-            "/app_build.gradle",
-            File(projectRoot, "app/build.gradle"),
+        copyTestDataWithReplacement(
+            "app_build.gradle",
+            "app/build.gradle",
             replacements
         )
-        copyResourceWithReplacement(
-            "/settings.gradle",
-            File(projectRoot, "settings.gradle"),
+        copyTestDataWithReplacement(
+            "settings.gradle",
+             "settings.gradle",
             replacements
         )
     }
 
     protected fun loadModule(moduleName: String, moduleReplacements: Map<String, String>) {
         val replacements = appendTestReplacements(moduleReplacements)
-        val moduleFolder = File(projectRoot, moduleName)
-        FileUtils.forceMkdir(moduleFolder)
-        copyResourceWithReplacement(
-            "/AndroidManifest.xml",
-            File(moduleFolder, "src/main/AndroidManifest.xml"),
+        copyTestDataWithReplacement(
+            "AndroidManifest.xml",
+            "${moduleName}/src/main/AndroidManifest.xml",
             replacements
         )
-        copyResourceWithReplacement(
-            "/module_build.gradle",
-            File(moduleFolder, "build.gradle"),
+        copyTestDataWithReplacement(
+            "module_build.gradle",
+            "${moduleName}/build.gradle",
             replacements
         )
     }
@@ -110,11 +113,45 @@ abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
         get() = File(toSystemDependentName(project.basePath!!))
 
     /**
-     * Copies the resource to the file relative to project root.
+     * Copies the file in the testData directory to the target directory.
+     *
+     * [source] and [target] are relative to testData and projectRoot respectively.
      */
-    fun copyResource(name: String, relativePath: String) {
-        val targetFile = File(projectRoot, relativePath)
-        copyResourceToFile(name, targetFile)
+    protected fun copyTestData(source: String, target: String) {
+        val sourcePath = TestUtils.resolveWorkspacePath(TEST_DATA_PATH).resolve(source)
+        val targetPath = File(projectRoot, target).toPath()
+        targetPath.parent.createDirectories()
+        Files.copy(sourcePath, targetPath)
+    }
+
+    protected fun copyTestDataWithReplacement(
+        source: String,
+        target: String,
+        replacements: Map<String, String> = emptyMap()
+    ) {
+        val sourcePath = TestUtils.resolveWorkspacePath(TEST_DATA_PATH).resolve(source)
+        val targetPath = File(projectRoot, target)
+        val contents = sourcePath.readText()
+        val out = StringBuilder(contents.length)
+        val matcher = pattern.matcher(contents)
+        var location = 0
+        while (matcher.find()) {
+            val start = matcher.start()
+            if (start > location) {
+                out.append(contents, location, start)
+            }
+            val key = matcher.group(1)
+            val replacement = replacements[key]
+            if (replacement != null) {
+                out.append(replacement)
+            }
+            location = matcher.end()
+        }
+        if (location < contents.length) {
+            out.append(contents, location, contents.length)
+        }
+        targetPath.parentFile.mkdirs()
+        targetPath.writeText(out.toString(), StandardCharsets.UTF_8)
     }
 
     /**
