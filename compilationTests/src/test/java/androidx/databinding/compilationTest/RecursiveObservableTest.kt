@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package androidx.databinding.compilationTest.bazel
+package androidx.databinding.compilationTest
 
 import android.databinding.tool.processing.ErrorMessages
 import org.hamcrest.CoreMatchers.containsString

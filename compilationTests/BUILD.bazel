@@ -15,7 +15,6 @@ iml_module(
         "//tools/base/build-system:gradle-distrib",
         "//tools/base/build-system:studio_repo.zip",
     ] + glob(["testData/**"]),
-    test_resources = ["src/test/resources"],
     test_shard_count = 4,
     test_srcs = ["src/test/java"],
     test_timeout = "long",

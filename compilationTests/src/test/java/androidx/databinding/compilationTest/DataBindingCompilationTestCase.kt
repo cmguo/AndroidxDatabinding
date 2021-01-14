@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.databinding.compilationTest.bazel
+package androidx.databinding.compilationTest
 
 import android.databinding.tool.processing.ScopedErrorReport
 import android.databinding.tool.store.Location
-import androidx.databinding.compilationTest.BaseCompilationTest.DEFAULT_APP_PACKAGE
-import androidx.databinding.compilationTest.BaseCompilationTest.KEY_DEPENDENCIES
-import androidx.databinding.compilationTest.BaseCompilationTest.KEY_MANIFEST_PACKAGE
-import androidx.databinding.compilationTest.BaseCompilationTest.KEY_SETTINGS_INCLUDES
-import androidx.databinding.compilationTest.CompilationResult
-import androidx.databinding.compilationTest.pattern
 import com.android.testutils.TestUtils
 import com.android.tools.idea.gradle.project.build.invoker.GradleBuildInvoker
 import com.android.tools.idea.testing.AndroidGradleTestCase
@@ -37,11 +31,19 @@ import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
+import java.util.regex.Pattern
 
 private const val TEST_DEPENDENCIES = "implementation 'androidx.fragment:fragment:+'"
 private const val DEFAULT_SETTINGS_GRADLE = "include ':app'"
 
 private const val TEST_DATA_PATH = "tools/data-binding/compilationTests/testData"
+
+private val pattern: Pattern = Pattern.compile("!@\\{([A-Za-z0-9_-]*)}")
+
+const val KEY_MANIFEST_PACKAGE = "PACKAGE"
+const val KEY_DEPENDENCIES = "DEPENDENCIES"
+const val KEY_SETTINGS_INCLUDES = "SETTINGS_INCLUDES"
+const val DEFAULT_APP_PACKAGE = "com.android.databinding.compilationTest.test"
 
 abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
 
@@ -173,7 +175,7 @@ abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
     ): Map<String, String> {
         val mutableMap = map.toMutableMap()
         if (mutableMap.containsKey(KEY_DEPENDENCIES)) {
-            mutableMap[KEY_DEPENDENCIES] += "\n${TEST_DEPENDENCIES}"
+            mutableMap[KEY_DEPENDENCIES] += "\n$TEST_DEPENDENCIES"
         } else {
             mutableMap[KEY_DEPENDENCIES] = TEST_DEPENDENCIES
         }

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package androidx.databinding.compilationTest.bazel;
+package androidx.databinding.compilationTest;
 
-import androidx.databinding.compilationTest.CompilationResult;
 import com.google.common.collect.Lists;
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.databinding.compilationTest.bazel
+package androidx.databinding.compilationTest
 
 import org.apache.commons.lang3.StringEscapeUtils
 import org.hamcrest.CoreMatchers.`is`

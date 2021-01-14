@@ -13,14 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.databinding.compilationTest.bazel
+package androidx.databinding.compilationTest
 
 import android.databinding.tool.processing.ErrorMessages
 import android.databinding.tool.processing.ScopedException
-import androidx.databinding.compilationTest.BaseCompilationTest
-import androidx.databinding.compilationTest.BaseCompilationTest.KEY_DEPENDENCIES
-import androidx.databinding.compilationTest.BaseCompilationTest.KEY_MANIFEST_PACKAGE
-import androidx.databinding.compilationTest.CompilationResult
 import com.google.common.base.Joiner
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.NameFileFilter
@@ -238,7 +234,7 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
         loadApp(
             mapOf(
                 KEY_DEPENDENCIES to "implementation project(':module1')",
-                BaseCompilationTest.KEY_SETTINGS_INCLUDES to "include ':app'\ninclude ':module1'"
+                KEY_SETTINGS_INCLUDES to "include ':app'\ninclude ':module1'"
             )
         )
         loadModule("module1", mapOf(KEY_MANIFEST_PACKAGE to "com.example.module1"))
@@ -317,7 +313,7 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
         loadApp(
             mapOf(
                 KEY_DEPENDENCIES to "implementation project(':module1')",
-                BaseCompilationTest.KEY_SETTINGS_INCLUDES to "include ':app'\ninclude ':module1'"
+                KEY_SETTINGS_INCLUDES to "include ':app'\ninclude ':module1'"
             )
         )
         loadModule(
@@ -340,7 +336,7 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
         loadApp(
             mapOf(
                 KEY_DEPENDENCIES to "implementation project(':module1')",
-                BaseCompilationTest.KEY_SETTINGS_INCLUDES to
+                KEY_SETTINGS_INCLUDES to
                         "include ':app'\ninclude ':module1'\n"
                         + "include ':module2'"
             )

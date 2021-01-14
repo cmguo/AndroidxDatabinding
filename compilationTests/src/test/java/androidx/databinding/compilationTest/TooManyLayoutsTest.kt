@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package androidx.databinding.compilationTest.bazel
+package androidx.databinding.compilationTest
 
-import androidx.databinding.compilationTest.BaseCompilationTest.KEY_DEPENDENCIES
-import androidx.databinding.compilationTest.BaseCompilationTest.KEY_MANIFEST_PACKAGE
-import androidx.databinding.compilationTest.BaseCompilationTest.KEY_SETTINGS_INCLUDES
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4

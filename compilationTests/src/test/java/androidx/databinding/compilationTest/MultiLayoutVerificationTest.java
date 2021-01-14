@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package androidx.databinding.compilationTest.bazel;
+package androidx.databinding.compilationTest;
 
 import android.databinding.tool.processing.ErrorMessages;
 import android.databinding.tool.processing.ScopedErrorReport;
 import android.databinding.tool.processing.ScopedException;
 import android.databinding.tool.store.Location;
-import androidx.databinding.compilationTest.CompilationResult;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
@@ -30,16 +29,18 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import static androidx.databinding.compilationTest.BaseCompilationTest.DEFAULT_APP_PACKAGE;
-import static androidx.databinding.compilationTest.BaseCompilationTest.KEY_CLASS_NAME;
-import static androidx.databinding.compilationTest.BaseCompilationTest.KEY_CLASS_TYPE;
-import static androidx.databinding.compilationTest.BaseCompilationTest.KEY_IMPORT_TYPE;
-import static androidx.databinding.compilationTest.BaseCompilationTest.KEY_INCLUDE_ID;
-import static androidx.databinding.compilationTest.BaseCompilationTest.KEY_VIEW_ID;
+import static androidx.databinding.compilationTest.DataBindingCompilationTestCaseKt.DEFAULT_APP_PACKAGE;
 import static org.junit.Assert.assertNotEquals;
+
 
 @RunWith(JUnit4.class)
 public class MultiLayoutVerificationTest extends DataBindingCompilationTestCase {
+    private static final String KEY_CLASS_NAME = "CLASSNAME";
+    private static final String KEY_CLASS_TYPE = "CLASSTYPE";
+    private static final String KEY_IMPORT_TYPE = "IMPORTTYPE";
+    private static final String KEY_INCLUDE_ID = "INCLUDEID";
+    private static final String KEY_VIEW_ID = "VIEWID";
+
     @Test
     public void testMultipleLayoutFilesWithNameMismatch() throws IOException {
         loadApp();

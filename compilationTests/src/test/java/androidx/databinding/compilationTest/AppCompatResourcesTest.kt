@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package androidx.databinding.compilationTest.bazel
+package androidx.databinding.compilationTest
 
-import androidx.databinding.compilationTest.BaseCompilationTest.KEY_DEPENDENCIES
 import org.hamcrest.CoreMatchers.`is`
 import org.hamcrest.CoreMatchers.containsString
 import org.hamcrest.MatcherAssert.assertThat
