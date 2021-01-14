@@ -422,7 +422,7 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
             "app/src/main/res/layout/layout_with_dependency.xml"
         )
         copyTestData(
-            "androidx.databinding.compilationTests.badJava/ObservableNoDependent.java",
+            "androidx/databinding/compilationTests/badJava/ObservableNoDependent.java",
             "app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
         )
         val result: CompilationResult = assembleDebug()
@@ -455,7 +455,7 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
             "app/src/main/res/layout/layout_with_dependency.xml"
         )
         copyTestData(
-            "androidx.databinding.compilationTests.badJava/ObservableNotBindableDependent.java",
+            "androidx/databinding/compilationTests/badJava/ObservableNotBindableDependent.java",
             "app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
         )
         val result: CompilationResult = assembleDebug()
@@ -488,7 +488,7 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
             "app/src/main/res/layout/layout_with_dependency.xml"
         )
         copyTestData(
-            "androidx.databinding.compilationTests.badJava/ObservableFieldDependent.java",
+            "androidx/databinding/compilationTests/badJava/ObservableFieldDependent.java",
             "app/src/main/java/androidx/databinding/compilationTest/badJava/MyObservable.java"
         )
         val result: CompilationResult = assembleDebug()
