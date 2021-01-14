@@ -16,6 +16,7 @@ iml_module(
         "//tools/base/build-system:studio_repo.zip",
     ],
     test_resources = ["src/test/resources"],
+    test_shard_count = 2,
     test_srcs = ["src/test/java"],
     test_timeout = "long",
     visibility = ["//visibility:public"],
