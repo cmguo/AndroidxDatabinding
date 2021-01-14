@@ -16,9 +16,7 @@
 package androidx.databinding.compilationTest.bazel
 
 import android.databinding.tool.processing.ErrorMessages
-import android.databinding.tool.processing.ScopedErrorReport
 import android.databinding.tool.processing.ScopedException
-import android.databinding.tool.store.Location
 import androidx.databinding.compilationTest.BaseCompilationTest
 import androidx.databinding.compilationTest.BaseCompilationTest.KEY_DEPENDENCIES
 import androidx.databinding.compilationTest.BaseCompilationTest.KEY_MANIFEST_PACKAGE
@@ -35,7 +33,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import java.io.File
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 
 @RunWith(JUnit4::class)
@@ -569,55 +566,5 @@ class SimpleCompilationTest : DataBindingCompilationTestCase() {
             Assert.assertEquals(errorMessage, scopedException.bareMessage)
         }
         return scopedException
-    }
-
-    /**
-     * Extracts the text in the given location from the file at the given application path.
-     *
-     * @param relativePath the relative path of the file to be extracted from
-     * @param location  The location to extract
-     * @return The string that is contained in the given location
-     * @throws IOException If file is invalid.
-     */
-    private fun extract(relativePath: String, location: Location): String {
-        val file = File(projectRoot, relativePath)
-        Assert.assertTrue(file.exists())
-        val result = StringBuilder()
-        val lines = file.readLines(StandardCharsets.UTF_8)
-        for (i in location.startLine..location.endLine) {
-            if (i > location.startLine) {
-                result.append("\n")
-            }
-            val line = lines[i]
-            var start = 0
-            if (i == location.startLine) {
-                start = location.startOffset
-            }
-            var end = line.length - 1 // inclusive
-            if (i == location.endLine) {
-                end = location.endOffset
-            }
-            result.append(line.substring(start, end + 1))
-        }
-        return result.toString()
-    }
-
-    /**
-     * Finds the error file referenced in the given error report.
-     * Handles possibly relative paths.
-     *
-     * Throws an assertion exception if the error file reported cannot be found.
-     */
-    private fun requireErrorFile(report: ScopedErrorReport): File {
-        val path = report.filePath
-        Assert.assertNotNull(path)
-        var file = File(path)
-        if (file.exists()) {
-            return file
-        }
-        // might be relative, try in test project folder
-        file = File(projectRoot, path)
-        Assert.assertTrue("required error file is missing in " + file.absolutePath, file.exists())
-        return file
     }
 }

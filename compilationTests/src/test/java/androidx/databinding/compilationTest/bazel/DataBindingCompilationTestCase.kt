@@ -15,6 +15,8 @@
  */
 package androidx.databinding.compilationTest.bazel
 
+import android.databinding.tool.processing.ScopedErrorReport
+import android.databinding.tool.store.Location
 import androidx.databinding.compilationTest.BaseCompilationTest.DEFAULT_APP_PACKAGE
 import androidx.databinding.compilationTest.BaseCompilationTest.KEY_DEPENDENCIES
 import androidx.databinding.compilationTest.BaseCompilationTest.KEY_MANIFEST_PACKAGE
@@ -30,20 +32,24 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.readText
-import org.apache.commons.io.FileUtils
+import org.junit.Assert
 import java.io.File
+import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 
-private const val TEST_DEPENDENCIES = "implementation 'androidx.appcompat:appcompat:+'\n" +
-        "implementation 'androidx.constraintlayout:constraintlayout:+'"
+private const val TEST_DEPENDENCIES = "implementation 'androidx.fragment:fragment:+'"
 private const val DEFAULT_SETTINGS_GRADLE = "include ':app'"
 
 private const val TEST_DATA_PATH = "tools/data-binding/compilationTests/testData"
 
 abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
 
-    protected fun loadApp(appReplacements: Map<String, String> = emptyMap()) {
+    protected fun loadApp() {
+        loadApp(emptyMap())
+    }
+
+    protected fun loadApp(appReplacements: Map<String, String>) {
         loadProject(TestProjectPaths.DATA_BINDING_COMPILATION)
         projectRoot.toPath().resolve("app/src/main").createDirectories()
         val replacements = appendTestReplacements(appReplacements)
@@ -80,7 +86,7 @@ abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
 
     protected fun assembleDebug() = invokeTasks(listOf("assembleDebug"))
 
-    protected fun invokeTasks(tasks: List<String>): CompilationResult {
+    protected fun invokeTasks(tasks: List<String>, args: List<String> = emptyList()): CompilationResult {
         val request =
             GradleBuildInvoker.Request(
                 project,
@@ -98,7 +104,7 @@ abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
                 }
             }
         }
-        request.setCommandLineArguments(listOf("--offline"))
+        request.setCommandLineArguments(listOf("--offline") + args)
         val result = invokeGradle(project) { gradleInvoker ->
             gradleInvoker.executeTasks(request)
         }
@@ -178,5 +184,61 @@ abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
             mutableMap[KEY_SETTINGS_INCLUDES] = DEFAULT_SETTINGS_GRADLE
         }
         return mutableMap
+    }
+
+    /**
+     * Finds the error file referenced in the given error report.
+     * Handles possibly relative paths.
+     *
+     * Throws an assertion exception if the error file reported cannot be found.
+     */
+    protected fun requireErrorFile(report: ScopedErrorReport): File {
+        val path = report.filePath
+        Assert.assertNotNull(path)
+        var file = File(path)
+        if (file.exists()) {
+            return file
+        }
+        // might be relative, try in test project folder
+        file = File(projectRoot, path)
+        Assert.assertTrue("required error file is missing in " + file.absolutePath, file.exists())
+        return file
+    }
+
+    /**
+     * Extracts the text in the given location from the file at the given application path.
+     *
+     * @param relativePath the relative path of the file to be extracted from
+     * @param location  The location to extract
+     * @return The string that is contained in the given location
+     * @throws IOException If file is invalid.
+     */
+    protected fun extract(relativePath: String, location: Location): String {
+        val file = File(projectRoot, relativePath)
+        Assert.assertTrue(file.exists())
+        val result = StringBuilder()
+        val lines = file.readLines(StandardCharsets.UTF_8)
+        for (i in location.startLine..location.endLine) {
+            if (i > location.startLine) {
+                result.append("\n")
+            }
+            val line = lines[i]
+            var start = 0
+            if (i == location.startLine) {
+                start = location.startOffset
+            }
+            var end = line.length - 1 // inclusive
+            if (i == location.endLine) {
+                end = location.endOffset
+            }
+            result.append(line.substring(start, end + 1))
+        }
+        return result.toString()
+    }
+
+    protected fun writeFile(path: String, contents: String) {
+        val targetFile = File(projectRoot, path)
+        targetFile.parentFile.mkdirs()
+        targetFile.writeText(contents, StandardCharsets.UTF_8)
     }
 }
