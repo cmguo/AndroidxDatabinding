@@ -18,6 +18,8 @@ package androidx.databinding.compilationTest
 import android.databinding.tool.processing.ScopedErrorReport
 import android.databinding.tool.store.Location
 import com.android.testutils.TestUtils
+import com.android.tools.analytics.Environment
+import com.android.tools.analytics.EnvironmentFakes
 import com.android.tools.idea.gradle.project.build.invoker.GradleBuildInvoker
 import com.android.tools.idea.testing.AndroidGradleTestCase
 import com.android.tools.idea.testing.TestProjectPaths
@@ -26,7 +28,11 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.util.io.FileUtil.toSystemDependentName
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.readText
+import org.junit.After
 import org.junit.Assert
+import org.junit.Before
+import org.junit.Rule
+import org.junit.rules.TemporaryFolder
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
@@ -46,6 +52,21 @@ const val KEY_SETTINGS_INCLUDES = "SETTINGS_INCLUDES"
 const val DEFAULT_APP_PACKAGE = "com.android.databinding.compilationTest.test"
 
 abstract class DataBindingCompilationTestCase : AndroidGradleTestCase() {
+    @get:Rule
+    val temporaryFolder = TemporaryFolder()
+
+    @Before
+    fun setup() {
+        EnvironmentFakes.setSingleProperty(
+            Environment.EnvironmentVariable.ANDROID_PREFS_ROOT.key,
+            temporaryFolder.newFolder().absolutePath
+        )
+    }
+
+    @After
+    fun restoreSystemProperty() {
+        EnvironmentFakes.setSystemEnvironment()
+    }
 
     protected fun loadApp() {
         loadApp(emptyMap())
